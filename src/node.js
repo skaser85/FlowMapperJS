@@ -1,5 +1,4 @@
-const { TouchBarOtherItemsProxy } = require("electron");
-const p5 = require("p5");
+const { Button } = require("./Button.js");
 
 class Node {
     constructor(w, h) {
@@ -24,6 +23,7 @@ class Node {
         this.borderColor = [0, 0, 0];
         this.selectedBorderColor = [0, 255, 0];
         this.selected = false;
+        this.buttons = [];
     }
 
     _setCenters() {
@@ -174,6 +174,16 @@ class Node {
         this.drawNode(p);
         if (this.text.length) this.drawText(p);
         this.drawArrow(p, dir, nextRow);
+        if (this.selected) {
+            this.buttons = [];
+            let editButton = new Button("E");
+            editButton.draw(p, this.cx - 10, this.top - 35);
+            let newRight = new Button("New->");
+            newRight.draw(p, this.right - 80, this.top - 35);
+            let newLeft = new Button("<-New");
+            newLeft.draw(p, this.left + 5, this.top - 35);
+            this.buttons.push(editButton, newRight, newLeft);
+        }
         // testing only
         this.drawLines(p);
     }

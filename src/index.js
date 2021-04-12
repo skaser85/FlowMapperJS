@@ -15,9 +15,11 @@ const ARROW_DIR = {
 const NODE_W = 250;
 const NODE_H = 150;
 const NODE_X_GAP = 100;
-const NODE_Y_GAP = 100;
+const NODE_Y_GAP = 150;
 const NODE_X_SPACING = NODE_W + NODE_X_GAP;
 const NODE_Y_SPACING = NODE_H + NODE_Y_GAP;
+
+let selectedNode = null;
 
 const sketch = (p) => {
     let nodes = [];
@@ -67,12 +69,40 @@ const sketch = (p) => {
     }
 
     p.mouseClicked = () => {
+        if (selectedNode) {
+            if (selectedNode.buttons.length) {
+                let clickHandled = false;
+                for (let b of selectedNode.buttons) {
+                    if (b.mouseInside(p)) {
+                        clickHandled = true;
+                        console.log(b.text);
+                    }
+                }
+                if (!clickHandled) checkNodes();
+            } else {
+                checkNodes();
+            }
+        } else {
+            checkNodes();
+        }
+    }
+
+    checkNodes = () => {
         for (let n of nodes) {
             if (n.mouseInside(p)) {
-                let text = "";
-                n.text.forEach(t => text += t.text + " ");
-                console.log(text);
-                n.selected = !n.selected;
+                if (selectedNode) {
+                    if (selectedNode === n) {
+                        selectedNode.selected = false;
+                        selectedNode = null;
+                    } else {
+                        selectedNode.selected = false;
+                        n.selected = true;
+                        selectedNode = n;
+                    }
+                } else {
+                    n.selected = true;
+                    selectedNode = n;
+                }
             }
         }
     }
