@@ -42,11 +42,11 @@ class Button {
         p.textFont(this.font);
         p.textSize(this.fontSize);
         let tW = p.textWidth(this.text);
-        this.w = tW + 10;
-        this.h = this.fontSize + 6;
+        this.w = tW + 35;
+        this.h = this.fontSize * 2;
         this.setCoords(x, y);
         let tX = this.cx - (tW/2);
-        let tY = this.cy + ((this.h/2) - 7);
+        let tY = this.cy + ((this.h/4) - 5);
         this.mouseInside(p) ? p.fill(this.createColor(p, [255, 0, 255], 128)) : p.noFill();
         p.stroke(0);
         p.strokeWeight(1);
