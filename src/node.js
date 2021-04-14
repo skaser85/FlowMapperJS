@@ -106,6 +106,7 @@ class Node {
         p.push();
         p.textFont(this.font);
         p.textSize(this.fontSize);
+        p.textAlign(p.CENTER, p.CENTER);
         p.fill(0);
         p.noStroke();
         this.reflowText(p);
@@ -116,10 +117,8 @@ class Node {
         let tyStart = this.cy - (linesTotalHeight/2);
         for (let t = 0; t < lines; t++) {
             let textObj = this.text[t];
-            let textW = p.textWidth(textObj.text);
-            let textLeft = this.cx - (textW/2);
             let textTop = tyStart + (t * this.fontSize) + this.lineSpacing;
-            p.text(textObj.text, textLeft, textTop);
+            p.text(textObj.text, this.cx, textTop);
         }
         p.pop();
     }
