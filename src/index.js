@@ -165,7 +165,7 @@ ipcRenderer.on("create:node", (e, data) => {
 
 ipcRenderer.on("edit:node", (e, data) => {
     if (selectedNode) {
-        console.log(selectedNode);
+        ipcRenderer.send("edit:node", selectedNode);
     } else {
         console.log("ain't no node selected, broseph");
     }

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, ipcRenderer } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, ipcRenderer, screen } = require('electron');
 // require("electron-reload")(__dirname);
 const path = require('path');
 const fs = require("fs");
@@ -7,12 +7,15 @@ const util = require("util");
 const exec = util.promisify(require("child_process").exec);
 const process = require("process");
 const spawn = require('child_process').spawnSync;
+const main = require('electron-reload');
 
 require('electron-reload')(__dirname, {
   electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
 });
 
-let mainWindow;
+let display;
+let mainWindow = null;
+let editWindow = null;
 
 let menuTemplate = [
   {
@@ -123,10 +126,17 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 }
 
 const createWindow = () => {
+    screen.getAllDisplays().forEach(d => {
+      if (d.displayFrequency === 144) display = d;
+    });
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 960,
+    // width: 1200,
+    // height: 960,
+    width: display.workAreaSize.width,
+    height: display.workAreaSize.height,
+    x: display.bounds.x,
+    y: display.bounds.y,
     webPreferences: {
       nodeIntegration: true,
       enableRemoteModule: true,
@@ -142,6 +152,13 @@ const createWindow = () => {
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
+
+  mainWindow.maximize();
+
+  mainWindow.on("moved", (e) => {
+    let bounds = mainWindow.getBounds();
+    display = screen.getDisplayNearestPoint({x: bounds.x, y: bounds.y});
+  });
 };
 
 // This method will be called when Electron has finished
@@ -168,3 +185,45 @@ app.on('activate', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
+ipcMain.on("edit:node", (e, data) => {
+  openNewWindow(data);
+});
+
+function openNewWindow(data) {
+  // https://jasonsturges.medium.com/multiple-window-electron-app-9dbffde8ce95
+  if (editWindow !== null) {
+    editWindow.close();
+  }
+
+  editWindow = new BrowserWindow({
+    show: false,
+    width: 640,
+    height: 360,
+    x: display.bounds.x + data.x,
+    y: display.bounds.y + data.y,
+    webPreferences: {
+      nodeIntegration: true,
+      enableRemoteModule: true,
+      contextIsolation: false
+    }
+  });
+
+  editWindow.loadURL(path.join(__dirname, 'editNode.html'));
+
+  editWindow.removeMenu();
+
+  editWindow.webContents.on("did-finish-load", () => {
+    editWindow.show();
+    editWindow.focus();
+    editWindow.webContents.send("node:data", data);
+  });
+
+  editWindow.on("closed", () => {
+    mainWindow.webContents.send("update:node", data);
+    editWindow = null;
+  });
+
+  editWindow.on("focus", () => {
+    // idk - menu stuff?
+  });
+}
