@@ -21,15 +21,15 @@ const NODE_X_SPACING = NODE_W + NODE_X_GAP;
 const NODE_Y_SPACING = NODE_H + NODE_Y_GAP;
 
 let selectedNode = null;
+let nodes = [];
+let buttons = [];
 
 const sketch = (p) => {
-    let nodes = [];
-    let buttons = [];
     let menuStartY = 0;
     let deltaOffset = 0;
     p.setup = () => {
         p.createCanvas(p.windowWidth, WINDOW_HEIGHT)
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 0; i++) {
             let n;
             if (i % 2 === 0 && i % 4 !== 0) {
                 n = new UserActionNode(NODE_W, NODE_H);
@@ -93,32 +93,25 @@ const sketch = (p) => {
     }
 
     p.mouseClicked = () => {
+        let clickHandled = false;
         for (let b of buttons) {
             if (b.mouseInside(p)) {
+                clickHandled = true;
                 console.log(p.textWidth(b.text));
             }
         }
-        if (selectedNode) {
-            if (selectedNode.buttons.length) {
-                let clickHandled = false;
-                for (let b of selectedNode.buttons) {
-                    if (b.mouseInside(p)) {
-                        clickHandled = true;
-                        console.log(b.text);
-                    }
-                }
-                if (!clickHandled) checkNodes();
-            } else {
-                checkNodes();
-            }
-        } else {
-            checkNodes();
-        }
+        if (!clickHandled) clickHandled = checkNodes();
+        if (!clickHandled && selectedNode) {
+            selectedNode.selected = false;
+            selectedNode = null;
+        } 
     }
 
     checkNodes = () => {
+        let clickHandled = false;
         for (let n of nodes) {
             if (n.mouseInside(p)) {
+                clickHandled = true;
                 if (selectedNode) {
                     if (selectedNode === n) {
                         selectedNode.selected = false;
@@ -134,6 +127,7 @@ const sketch = (p) => {
                 }
             }
         }
+        return clickHandled;
     }
 
     p.mouseWheel = (e) => {
@@ -151,3 +145,28 @@ const sketch = (p) => {
 }
 
 const app = new p5(sketch);
+
+ipcRenderer.on("create:node", (e, data) => {
+    let n;
+    switch(data.type) {
+        case "user":
+            n = new UserActionNode(NODE_W, NODE_H);
+            break;
+        case "system":
+            n = new SystemActionNode(NODE_W, NODE_H);
+            break;
+        case "decision":
+            n = new DecisionNode(NODE_W, NODE_H);
+            break;
+        }
+    if (data.text) n.setText(data.text);
+    nodes.push(n);
+});
+
+ipcRenderer.on("edit:node", (e, data) => {
+    if (selectedNode) {
+        console.log(selectedNode);
+    } else {
+        console.log("ain't no node selected, broseph");
+    }
+});

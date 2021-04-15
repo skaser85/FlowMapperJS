@@ -12,6 +12,111 @@ require('electron-reload')(__dirname, {
   electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
 });
 
+let mainWindow;
+
+let menuTemplate = [
+  {
+    label: "File",
+    submenu: [
+      { 
+        label: "Create User Action Node...",
+        click: () => {
+          mainWindow.webContents.send("create:node", {type: "user", text: ""});
+        },
+        id: "create-use-node",
+        enabled: true,
+        accelerator: "Ctrl+u"
+      },
+      { 
+        label: "Create System Action Node...",
+        click: () => {
+          mainWindow.webContents.send("create:node", {type: "system", text: ""});
+        },
+        id: "create-system-node",
+        enabled: true,
+        accelerator: "Ctrl+s"
+      },
+      { 
+        label: "Create Decision Node...",
+        click: () => {
+          mainWindow.webContents.send("create:node", {type: "decision", text: ""});
+        },
+        id: "create-decision-node",
+        enabled: true,
+        accelerator: "Ctrl+d"
+      },
+      { type: "separator" },
+      { 
+        label: "Edit Selected Node...",
+        click: () => {
+          mainWindow.webContents.send("edit:node");
+        },
+        id: "edit-selected-node",
+        enabled: true,
+        accelerator: "Ctrl+e"
+      },
+      { role: "quit" }
+    ]
+  },
+  {
+    label: "Edit",
+    submenu: [
+      { role: "undo" },
+      { role: "redo" },
+      { type: "separator" },
+      { role: "cut" },
+      { role: "copy" },
+      { role: "paste" },
+      { role: "delete" },
+      { type: "separator" },
+      { role: "selectAll" }
+    ]
+  },
+  {
+    label: "View",
+    submenu: [
+      { role: "reload" },
+      { role: "forcereload" },
+      { role: "toggledevtools" },
+      { type: "separator" },
+      { role: "resetzoom" },
+      { role: "zoomin" },
+      { role: "zoomout" },
+      { type: "separator" },
+      { role: "togglefullscreen" }
+    ]
+  },
+  {
+    label: "Window",
+    submenu: [
+      { role: "minimize" },
+      { role: "zoomIn" },
+      { role: "zoomOut" },
+      { role: "resetZoom" },
+      { role: "close" }
+    ]
+  }
+];
+let menu = Menu.buildFromTemplate(menuTemplate);
+
+function createSubmenu(data, tableType) {
+  let submenu = [];
+  data.forEach(d => {
+    submenu.push(
+      {
+        label: d.toUpperCase(),
+        id: `${tableType}-${d.toUpperCase()}`,
+        type: "checkbox",
+        checked: false,
+        click: () => {
+          mainWindow.webContents.send("show:table", {table: d, type: tableType});
+        }
+      }
+    );
+  });
+  return submenu;
+}
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
   app.quit();
@@ -19,7 +124,7 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 
 const createWindow = () => {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 960,
     webPreferences: {
@@ -31,6 +136,9 @@ const createWindow = () => {
 
   // and load the index.html of the app.
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
+
+  // add the menu
+  mainWindow.setMenu(menu);
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
