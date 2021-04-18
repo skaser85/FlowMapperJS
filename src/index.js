@@ -35,20 +35,24 @@ const sketch = (p) => {
         let x = 100;
         let y = 200;
         let arrow_dir = ARROW_DIR.RIGHT;
+        let hasErrorNode = false;
         for (let i = 0; i < nodes.length; i++) {
             let n = nodes[i];
+            if (n.errorNode) hasErrorNode = true;
             n.setCoords(x, y);
             arrow_dir === ARROW_DIR.RIGHT ? x += NODE_X_SPACING : x -= NODE_X_SPACING;
             if (x + NODE_X_GAP > p.windowWidth) {
-                n.draw(p, arrow_dir, true);
+                n.draw(p, arrow_dir, true, hasErrorNode);
                 x -= NODE_X_SPACING;
-                y += NODE_Y_SPACING;
+                y += NODE_Y_SPACING + (hasErrorNode ? 200 : 0);
                 arrow_dir = ARROW_DIR.LEFT;
+                hasErrorNode = false;
             } else if (x - NODE_X_GAP < 0) {
-                n.draw(p, arrow_dir, true);
+                n.draw(p, arrow_dir, true, hasErrorNode);
                 x += NODE_X_SPACING;
-                y += NODE_Y_SPACING;
+                y += NODE_Y_SPACING + (hasErrorNode ? 200 : 0);
                 arrow_dir = ARROW_DIR.RIGHT;
+                hasErrorNode = false;
             } else {
                 n.draw(p, arrow_dir, false);
             }

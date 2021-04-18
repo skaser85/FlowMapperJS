@@ -112,7 +112,7 @@ class Node {
         p.textFont(this.font);
         p.textSize(this.fontSize);
         p.textAlign(p.CENTER, p.CENTER);
-        p.fill(0);
+        p.fill(this.createColor(p, this.textColor, 255));
         p.noStroke();
         this.reflowText(p);
         let lines = this.text.length;
@@ -136,56 +136,13 @@ class Node {
         p.pop();
     }
 
-    drawArrow(p, dir, nextRow) {
-        p.push();
-        p.stroke(0);
-        p.strokeWeight(3);
-        if (dir === 0) {
-            if (nextRow) {
-                let arrowHalfEnd = this.left - this.arrowLineLen/2;
-                let arrowYSpacing = this.cy + this.arrowYSpacing;
-                let startX = this.left - this.arrowWingLen;
-                let topY = arrowYSpacing - this.arrowWingYMax;
-                let bottomY = arrowYSpacing + this.arrowWingYMax;
-                p.line(this.left, this.cy, arrowHalfEnd, this.cy);
-                p.line(arrowHalfEnd, this.cy, arrowHalfEnd, arrowYSpacing);
-                p.line(arrowHalfEnd, arrowYSpacing, this.left, arrowYSpacing);
-                p.line(startX, topY, this.left, arrowYSpacing);
-                p.line(startX, bottomY, this.left, arrowYSpacing);
-            } else {
-                let arrowEnd = this.left - this.arrowLineLen;
-                let arrowStart = arrowEnd + this.arrowWingLen;
-                p.line(this.left, this.cy, arrowEnd, this.cy);
-                p.line(arrowStart, this.cy - this.arrowWingYMax, arrowEnd, this.cy);
-                p.line(arrowStart, this.cy + this.arrowWingYMax, arrowEnd, this.cy);
-            }
-        } else {
-            if (nextRow) {
-                let arrowHalfEnd = this.right + this.arrowLineLen/2;
-                let arrowYSpacing = this.cy + this.arrowYSpacing;
-                p.line(this.right, this.cy, arrowHalfEnd, this.cy);
-                p.line(arrowHalfEnd, this.cy, arrowHalfEnd, arrowYSpacing);
-                p.line(arrowHalfEnd, arrowYSpacing, this.right, arrowYSpacing);
-                p.line(this.right + this.arrowWingLen, arrowYSpacing - this.arrowWingYMax, this.right, arrowYSpacing);
-                p.line(this.right + this.arrowWingLen, arrowYSpacing + this.arrowWingYMax, this.right, arrowYSpacing);
-            } else {
-                let arrowEnd = this.right + this.arrowLineLen;
-                let arrowStart = arrowEnd - this.arrowWingLen;
-                p.line(this.right, this.cy, arrowEnd, this.cy);
-                p.line(arrowStart, this.cy - this.arrowWingXSpacing, arrowEnd, this.cy);
-                p.line(arrowStart, this.cy + this.arrowWingXSpacing, arrowEnd, this.cy);
-            }
-        }
-        p.pop();
-    }
-
-    drawArrow2(p, startPoint, endPoint) {
+    drawArrow(p, startPoint, endPoint) {
         p.push();
         
-        p.fill(0, 255, 255);
-        p.ellipse(startPoint.x, startPoint.y, 24, 24);
-        p.fill(255, 255, 0);
-        p.ellipse(endPoint.x, endPoint.y, 24, 24);
+        // p.fill(0, 255, 255);
+        // p.ellipse(startPoint.x, startPoint.y, 24, 24);
+        // p.fill(255, 255, 0);
+        // p.ellipse(endPoint.x, endPoint.y, 24, 24);
 
         p.stroke(0);
         p.strokeWeight(3);
@@ -193,11 +150,11 @@ class Node {
             // vertical line
             p.line(startPoint.x, startPoint.y, endPoint.x, endPoint.y);
             if (startPoint.y > endPoint.y) {
-                // draw wings at startPoint
+                // draw wings at pointing down
                 p.line(endPoint.x, endPoint.y, endPoint.x + this.arrowWingYMax, endPoint.y + this.arrowWingLen);
                 p.line(endPoint.x, endPoint.y, endPoint.x - this.arrowWingYMax, endPoint.y + this.arrowWingLen);
             } else {
-                // draw wings at endPoint
+                // draw wings at pointing up
                 p.line(endPoint.x, endPoint.y, endPoint.x + this.arrowWingYMax, endPoint.y - this.arrowWingLen);
                 p.line(endPoint.x, endPoint.y, endPoint.x - this.arrowWingYMax, endPoint.y - this.arrowWingLen);
             }
@@ -205,28 +162,83 @@ class Node {
             // horizontal line
             p.line(startPoint.x, startPoint.y, endPoint.x, endPoint.y);
             if (startPoint.x < endPoint.x) {
-                // draw wings at endPoint
+                // draw wings pointing right
+                p.line(endPoint.x, endPoint.y, endPoint.x - this.arrowWingLen, endPoint.y - this.arrowWingYMax);
+                p.line(endPoint.x, endPoint.y, endPoint.x - this.arrowWingLen, endPoint.y + this.arrowWingYMax);
             } else {
-                // draw wings at startPoint
+                // draw wings pointing left
+                p.line(endPoint.x, endPoint.y, endPoint.x + this.arrowWingLen, endPoint.y - this.arrowWingYMax);
+                p.line(endPoint.x, endPoint.y, endPoint.x + this.arrowWingLen, endPoint.y + this.arrowWingYMax);
             }
         }
         p.pop();
     }
 
-    draw(p, dir, nextRow) {
+    draw(p, dir, nextRow, prevRowHadError) {
         this.drawNode(p);
         if (this.text.length) this.drawText(p);
-        if (this.type !== "error") this.drawArrow(p, dir, nextRow);
+        if (this.type !== "error") {
+            if (nextRow) {
+                p.push();
+                p.stroke(0);
+                p.strokeWeight(3);
+                let bigYSpacing = this.cy + this.arrowYSpacing + (prevRowHadError ? 200 : 0);
+                let outerX;
+                if (dir === 0) { //left
+                    outerX = this.left - this.arrowLineLen/2;
+                    p.line(this.left, this.cy, outerX, this.cy);
+                    p.line(outerX, this.cy, outerX, bigYSpacing);
+                    this.drawArrow(p, {x: outerX, y: bigYSpacing}, {x: this.left, y: bigYSpacing});
+                } else { // right
+                    outerX = this.right + this.arrowLineLen/2;
+                    p.line(this.right, this.cy, outerX, this.cy);
+                    p.line(outerX, this.cy, outerX, bigYSpacing);
+                    this.drawArrow(p, {x: outerX, y: bigYSpacing}, {x: this.right, y: bigYSpacing});
+                }
+                p.pop();
+            } else {
+                if (dir === 0) { // left
+                    this.drawArrow(p, {x: this.left, y: this.cy}, {x: this.left - this.arrowLineLen, y: this.cy});
+                } else { // right
+                    this.drawArrow(p, {x: this.right, y: this.cy}, {x: this.right + this.arrowLineLen, y: this.cy});
+                }
+            }
+        }
         if (this.selected) {
             // idk, mang
         }
         if (this.errorNode) {
             this.errorNode.setCoords(this.x, this.y + 250);
             this.errorNode.draw(p);
-            this.drawArrow2(p, {x: this.cx, y: this.bottom}, {x: this.cx, y: this.errorNode.top});
+            this.drawArrow(p, {x: this.cx, y: this.bottom}, {x: this.cx, y: this.errorNode.top});
+        }
+        if (this.type === "decision") {
+            p.push();
+            let boxW = 35;
+            let boxH = 20;
+            p.textFont(this.font);
+            p.textSize(this.fontSize);
+            p.textAlign(p.CENTER, p.CENTER);
+            p.fill(this.createColor(p, this.yesTagColor, 255));
+            p.stroke(0);
+            p.strokeWeight(1);
+            if (dir === 0) { // left
+                p.rect(this.left - this.arrowLineLen/2, this.cy - boxH/2, boxW, boxH);
+                p.fill(0);
+                p.text("YES", this.left - this.arrowLineLen/2 + boxW/2, this.cy);
+            } else { // right
+                p.rect(this.right + this.arrowLineLen/2 - boxW/2, this.cy - boxH/2, boxW, boxH);
+                p.fill(0);
+                p.text("YES", this.right + this.arrowLineLen/2, this.cy);
+            }
+            p.fill(this.createColor(p, this.noTagColor, 255));
+            p.rect(this.cx - boxW/2, this.bottom + boxH, boxW, boxH);
+            p.fill(0);
+            p.text("NO", this.cx, this.bottom + boxH * 1.5);
+            p.pop();
         }
         // testing only
-        this.drawLines(p);
+        // this.drawLines(p);
     }
 }
 
@@ -238,6 +250,7 @@ class UserActionNode extends Node {
         this.alpha = 255;
         this.hoverColor = [245, 225, 135];
         this.errorNode = null;
+        this.textColor = [0, 0, 0];
     }
 }
 
@@ -249,6 +262,7 @@ class SystemActionNode extends Node {
         this.alpha = 255;
         this.hoverColor = [94, 220, 255];
         this.errorNode = null;
+        this.textColor = [0, 0, 0];
     }
 }
 
@@ -263,6 +277,7 @@ class DecisionNode extends Node {
         this.yesTagColor = [255, 247, 92];
         this.noTagColor = [224, 92, 250];
         this.errorNode = null;
+        this.textColor = [0, 0, 0];
     }
 }
 
@@ -274,6 +289,7 @@ class ErrorNode extends Node {
         this.alpha = 255;
         this.hoverColor = [255, 99, 99];
         this.parent = parent;
+        this.textColor = [255, 255, 255];
     }
 }
 

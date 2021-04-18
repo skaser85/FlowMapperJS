@@ -157,7 +157,14 @@ const createWindow = () => {
 
   mainWindow.on("moved", (e) => {
     let bounds = mainWindow.getBounds();
-    display = screen.getDisplayNearestPoint({x: bounds.x, y: bounds.y});
+    let bestX = Infinity;
+    screen.getAllDisplays().forEach(d => {
+      let xDiff = Math.abs(d.bounds.x - bounds.x);
+      if (xDiff < bestX) {
+        bestX = xDiff;
+        display = d;
+      }
+    });
   });
 };
 
@@ -201,12 +208,13 @@ function openNewWindow(data) {
 
   let width = 640;
   let height = 760;
+  console.log(display.bounds);
   editWindow = new BrowserWindow({
     show: false,
     width,
     height,
-    x: display.bounds.x + data.x,//(display.bounds.x/2) - (width/2),
-    y: display.bounds.y + data.y,//(display.bounds.y/2) - (height/2),
+    x: display.bounds.x + (display.bounds.width/2) - (width/2),
+    y: display.bounds.y + (display.bounds.height/2) - (height/2),
     webPreferences: {
       nodeIntegration: true,
       enableRemoteModule: true,
