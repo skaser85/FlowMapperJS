@@ -179,11 +179,51 @@ class Node {
         p.pop();
     }
 
+    drawArrow2(p, startPoint, endPoint) {
+        p.push();
+        
+        p.fill(0, 255, 255);
+        p.ellipse(startPoint.x, startPoint.y, 24, 24);
+        p.fill(255, 255, 0);
+        p.ellipse(endPoint.x, endPoint.y, 24, 24);
+
+        p.stroke(0);
+        p.strokeWeight(3);
+        if (startPoint.x === endPoint.x) {
+            // vertical line
+            p.line(startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+            if (startPoint.y > endPoint.y) {
+                // draw wings at startPoint
+                p.line(endPoint.x, endPoint.y, endPoint.x + this.arrowWingYMax, endPoint.y + this.arrowWingLen);
+                p.line(endPoint.x, endPoint.y, endPoint.x - this.arrowWingYMax, endPoint.y + this.arrowWingLen);
+            } else {
+                // draw wings at endPoint
+                p.line(endPoint.x, endPoint.y, endPoint.x + this.arrowWingYMax, endPoint.y - this.arrowWingLen);
+                p.line(endPoint.x, endPoint.y, endPoint.x - this.arrowWingYMax, endPoint.y - this.arrowWingLen);
+            }
+        } else {
+            // horizontal line
+            p.line(startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+            if (startPoint.x < endPoint.x) {
+                // draw wings at endPoint
+            } else {
+                // draw wings at startPoint
+            }
+        }
+        p.pop();
+    }
+
     draw(p, dir, nextRow) {
         this.drawNode(p);
         if (this.text.length) this.drawText(p);
-        this.drawArrow(p, dir, nextRow);
+        if (this.type !== "error") this.drawArrow(p, dir, nextRow);
         if (this.selected) {
+            // idk, mang
+        }
+        if (this.errorNode) {
+            this.errorNode.setCoords(this.x, this.y + 250);
+            this.errorNode.draw(p);
+            this.drawArrow2(p, {x: this.cx, y: this.bottom}, {x: this.cx, y: this.errorNode.top});
         }
         // testing only
         this.drawLines(p);
@@ -197,17 +237,7 @@ class UserActionNode extends Node {
         this.color = [227, 201, 84];
         this.alpha = 255;
         this.hoverColor = [245, 225, 135];
-    }
-}
-
-class ErrorNode extends Node {
-    constructor(w, h, parent) {
-        super(w, h);
-        this.type = "error";
-        this.color = [227, 84, 84];
-        this.alpha = 255;
-        this.hoverColor = [255, 99, 99];
-        this.parent = parent;
+        this.errorNode = null;
     }
 }
 
@@ -218,6 +248,7 @@ class SystemActionNode extends Node {
         this.color = [84, 196, 227];
         this.alpha = 255;
         this.hoverColor = [94, 220, 255];
+        this.errorNode = null;
     }
 }
 
@@ -231,6 +262,18 @@ class DecisionNode extends Node {
         this.tagSpacing = 5;
         this.yesTagColor = [255, 247, 92];
         this.noTagColor = [224, 92, 250];
+        this.errorNode = null;
+    }
+}
+
+class ErrorNode extends Node {
+    constructor(w, h, parent) {
+        super(w, h);
+        this.type = "error";
+        this.color = [227, 84, 84];
+        this.alpha = 255;
+        this.hoverColor = [255, 99, 99];
+        this.parent = parent;
     }
 }
 

@@ -74,22 +74,33 @@ const sketch = (p) => {
         for (let n of nodes) {
             if (n.mouseInside(p)) {
                 clickHandled = true;
-                if (selectedNode) {
-                    if (selectedNode === n) {
-                        selectedNode.selected = false;
-                        selectedNode = null;
-                    } else {
-                        selectedNode.selected = false;
-                        n.selected = true;
-                        selectedNode = n;
+                setSelectedNode(n);
+            } else {
+                if (n.errorNode) {
+                    if (n.errorNode.mouseInside(p)) {
+                        clickHandled = true;
+                        setSelectedNode(n.errorNode);
                     }
-                } else {
-                    n.selected = true;
-                    selectedNode = n;
                 }
             }
         }
         return clickHandled;
+    }
+
+    setSelectedNode = (n) => {
+        if (selectedNode) {
+            if (selectedNode === n) {
+                selectedNode.selected = false;
+                selectedNode = null;
+            } else {
+                selectedNode.selected = false;
+                n.selected = true;
+                selectedNode = n;
+            }
+        } else {
+            n.selected = true;
+            selectedNode = n;
+        }
     }
 
     p.mouseWheel = (e) => {
@@ -119,6 +130,7 @@ function createNode(type) {
             break;
         case "decision":
             n = new DecisionNode(NODE_W, NODE_H);
+            n.errorNode = new ErrorNode(NODE_W, NODE_H, n);
             break;
         }
     return n;
@@ -141,6 +153,9 @@ ipcRenderer.on("edit:node", (e, data) => {
 
 ipcRenderer.on("update:node", (e, data) => {
     let node = nodes[data.id];
+    if (data.parent) {
+        node = nodes[data.parent.id].errorNode;
+    }
     node.setText(data.text);
     if (data.type !== node.type) {
         let n = createNode(data.type);

@@ -35,5 +35,10 @@ ipcRenderer.on("node:data", (e, data) => {
 });
 
 updateBtn.addEventListener("click", (e) => {
-    ipcRenderer.send("update:node", {id: nodeData.id, type: Array.from(typeRadios).filter(t => t.checked)[0].value, text: nodeText.value})
+    ipcRenderer.send("update:node", {
+        id: nodeData.id,
+        type: Array.from(typeRadios).filter(t => t.checked)[0].value,
+        text: nodeText.value,
+        parent: nodeData.parent
+    })
 });
