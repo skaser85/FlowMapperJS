@@ -3,4 +3,85 @@ body {
     padding: 0;
     margin: 0;
     display: flex;
-  }
+    /* font-family: 'Inconsolata', monospace; */
+    font-family: 'Montserrat', sans-serif;
+    /* font-family: 'Nunito', sans-serif; */
+    /* font-family: 'Open Sans', sans-serif; */
+    /* font-family: 'Zilla Slab', serif; */
+}
+
+#page-wrapper {
+    width: 640px;
+    height: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.title {
+    font-family: 'Zen Dots', cursive;
+    font-size: 24px;
+}
+
+.node-text {
+    font-size: 18px;
+}
+
+input[type="radio"] {
+    display: none;
+}
+
+.node-types {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.node-type-label {
+    background: #ddd;
+    padding: 5px 10px;
+    font-size: 18px;
+    margin: 10px;
+}
+
+input[type="radio"]:checked+label {
+    background: chartreuse;
+}
+
+.update-button {
+    width: 100%;
+    margin-top: 10px;
+    margin-left: 800px;
+}
+
+.button {
+    border: none;
+    outline: none;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 2px 2px 2px #ccc;
+    transition: all .2s ease-in;
+    font-size: 15px;
+    font-weight: 700;
+    justify-self: end;
+    user-select: none;
+}
+
+.button:hover {
+    cursor: pointer;
+    box-shadow: 2px 2px 2px #999;
+}
+
+.button:active {
+    cursor: pointer;
+    box-shadow: 2px 2px 2px #ddd;
+}
+
+.node-update-button {
+    background: rgb(250, 106, 255);
+}

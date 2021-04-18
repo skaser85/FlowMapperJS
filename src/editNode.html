@@ -3,20 +3,28 @@
   <head>
     <meta charset="UTF-8">
     <title>Hello World!</title>
-    <link rel="stylesheet" href="index.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inconsolata&family=Montserrat&family=Nunito:ital@1&family=Open+Sans&family=Zen+Dots&family=Zilla+Slab&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="editNode.css">
   </head>
   <body>
-    <label for="node-text">Node Text</label>
-    <textarea id="node-text" rows=10 cols=50 maxlength="250" autofocus></textarea>
-    <div class="node-types">
-        <input type="radio" id="user-action-node" name="node-types" value="user">
-        <label for="user-action-node">User Action Node</label>
-        <input type="radio" id="system-action-node" name="node-types" value="system">
-        <label for="system-action-node">System Action Node</label>
-        <input type="radio" id="decision-action-node" name="node-types" value="decision">
-        <label for="decision-action-node">Decision Action Node</label>
-        <input type="radio" id="error-action-node" name="node-types" value="error">
-        <label for="error-action-node">Error Action Node</label>
+    <div id="page-wrapper">
+        <label class="title textarea-label" for="node-text">Node Text</label>
+        <textarea class="node-text" id="node-text" rows=8 cols=35 maxlength="250" autofocus></textarea>
+        <div class="update-button">
+            <button id="update-node" class="button node-update-button">Update Node</button>
+        </div>
+        <p class="title">Node Types</p>
+        <div class="node-types">
+            <input type="radio" id="user-action-node" name="node-types" value="user">
+            <label class="node-type-label" for="user-action-node">User Action Node</label>
+            <input type="radio" id="system-action-node" name="node-types" value="system">
+            <label class="node-type-label" for="system-action-node">System Action Node</label>
+            <input type="radio" id="decision-action-node" name="node-types" value="decision">
+            <label class="node-type-label" for="decision-action-node">Decision Action Node</label>
+            <input type="radio" id="error-action-node" name="node-types" value="error">
+            <label class="node-type-label" for="error-action-node">Error Action Node</label>
+        </div>
     </div>
     <script>
       require("./editNode.js");

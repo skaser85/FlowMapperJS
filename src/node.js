@@ -51,7 +51,7 @@ class Node {
         this.text = [{text, x: this.x, y: this.y}];
     }
 
-    reflowText(p) {
+    flattenText() {
         let text = "";
         this.text.forEach(t => {
             if (text === "") {
@@ -60,6 +60,11 @@ class Node {
                 text = text + " " + t.text;
             }
         });
+        return text;
+    }
+
+    reflowText(p) {
+        let text = this.flattenText();
         this.text = [];
         let temp = [];
         for (let word of text.split(" ")) {
@@ -179,14 +184,6 @@ class Node {
         if (this.text.length) this.drawText(p);
         this.drawArrow(p, dir, nextRow);
         if (this.selected) {
-            // this.buttons = [];
-            // let editButton = new Button("E");
-            // editButton.draw(p, this.cx - 10, this.top - 35);
-            // let newRight = new Button("New->");
-            // newRight.draw(p, this.right - 80, this.top - 35);
-            // let newLeft = new Button("<-New");
-            // newLeft.draw(p, this.left + 5, this.top - 35);
-            // this.buttons.push(editButton, newRight, newLeft);
         }
         // testing only
         this.drawLines(p);
@@ -196,6 +193,7 @@ class Node {
 class UserActionNode extends Node {
     constructor(w, h) {
         super(w, h);
+        this.type = "user";
         this.color = [227, 201, 84];
         this.alpha = 255;
         this.hoverColor = [245, 225, 135];
@@ -205,6 +203,7 @@ class UserActionNode extends Node {
 class ErrorNode extends Node {
     constructor(w, h, parent) {
         super(w, h);
+        this.type = "error";
         this.color = [227, 84, 84];
         this.alpha = 255;
         this.hoverColor = [255, 99, 99];
@@ -215,6 +214,7 @@ class ErrorNode extends Node {
 class SystemActionNode extends Node {
     constructor(w, h) {
         super(w, h);
+        this.type = "system";
         this.color = [84, 196, 227];
         this.alpha = 255;
         this.hoverColor = [94, 220, 255];
@@ -224,6 +224,7 @@ class SystemActionNode extends Node {
 class DecisionNode extends Node {
     constructor(w, h) {
         super(w, h);
+        this.type = "decision";
         this.color = [84, 227, 105];
         this.alpha = 255;
         this.hoverColor = [97, 255, 120];

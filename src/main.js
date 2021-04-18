@@ -189,18 +189,24 @@ ipcMain.on("edit:node", (e, data) => {
   openNewWindow(data);
 });
 
+ipcMain.on("update:node", (e, data) => {
+  mainWindow.webContents.send("update:node", data);
+});
+
 function openNewWindow(data) {
   // https://jasonsturges.medium.com/multiple-window-electron-app-9dbffde8ce95
   if (editWindow !== null) {
     editWindow.close();
   }
 
+  let width = 640;
+  let height = 760;
   editWindow = new BrowserWindow({
     show: false,
-    width: 640,
-    height: 360,
-    x: display.bounds.x + data.x,
-    y: display.bounds.y + data.y,
+    width,
+    height,
+    x: display.bounds.x + data.x,//(display.bounds.x/2) - (width/2),
+    y: display.bounds.y + data.y,//(display.bounds.y/2) - (height/2),
     webPreferences: {
       nodeIntegration: true,
       enableRemoteModule: true,
@@ -217,9 +223,10 @@ function openNewWindow(data) {
     editWindow.focus();
     editWindow.webContents.send("node:data", data);
   });
+  
+  // editWindow.webContents.openDevTools();
 
   editWindow.on("closed", () => {
-    mainWindow.webContents.send("update:node", data);
     editWindow = null;
   });
 

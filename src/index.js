@@ -22,34 +22,12 @@ const NODE_Y_SPACING = NODE_H + NODE_Y_GAP;
 
 let selectedNode = null;
 let nodes = [];
-let buttons = [];
 
 const sketch = (p) => {
     let menuStartY = 0;
     let deltaOffset = 0;
     p.setup = () => {
         p.createCanvas(p.windowWidth, WINDOW_HEIGHT)
-        for (let i = 0; i < 0; i++) {
-            let n;
-            if (i % 2 === 0 && i % 4 !== 0) {
-                n = new UserActionNode(NODE_W, NODE_H);
-                n.setText("This is the best test text that ever texted, like, ever, broski!");
-            } else if (i % 3 === 0) {
-                n = new ErrorNode(NODE_W, NODE_H);
-                n.setText("Error Node");
-            } else if (i % 4 === 0) {
-                n = new SystemActionNode(NODE_W, NODE_H);
-                n.setText("System test text.  How friggin' cool is that?!");
-            } else {
-                n = new DecisionNode(NODE_W, NODE_H);
-                n.setText("decision");
-            }
-            nodes.push(n);
-        }
-        
-        buttons.push(new Button("Edit Node"));
-        buttons.push(new Button("Create User Action Node"));
-        buttons.push(new Button("Create System Action Node"));
     }
 
     p.draw = () => {
@@ -75,16 +53,6 @@ const sketch = (p) => {
                 n.draw(p, arrow_dir, false);
             }
         }
-        p.push();
-        p.noStroke();
-        p.fill(225, 225);
-        p.rect(0, menuStartY, p.windowWidth, 150);
-        let buttonStartX = 100;
-        for (let b of buttons) {
-            b.draw(p, buttonStartX, menuStartY + 50);
-            buttonStartX += b.w + 25;
-        }
-        p.pop();
         // p.noLoop();
     }
 
@@ -94,12 +62,6 @@ const sketch = (p) => {
 
     p.mouseClicked = () => {
         let clickHandled = false;
-        for (let b of buttons) {
-            if (b.mouseInside(p)) {
-                clickHandled = true;
-                console.log(p.textWidth(b.text));
-            }
-        }
         if (!clickHandled) clickHandled = checkNodes();
         if (!clickHandled && selectedNode) {
             selectedNode.selected = false;
@@ -146,9 +108,9 @@ const sketch = (p) => {
 
 const app = new p5(sketch);
 
-ipcRenderer.on("create:node", (e, data) => {
+function createNode(type) {
     let n;
-    switch(data.type) {
+    switch(type) {
         case "user":
             n = new UserActionNode(NODE_W, NODE_H);
             break;
@@ -159,7 +121,13 @@ ipcRenderer.on("create:node", (e, data) => {
             n = new DecisionNode(NODE_W, NODE_H);
             break;
         }
+    return n;
+}
+
+ipcRenderer.on("create:node", (e, data) => {
+    let n = createNode(data.type);
     if (data.text) n.setText(data.text);
+    n.id = nodes.length;
     nodes.push(n);
 });
 
@@ -168,5 +136,18 @@ ipcRenderer.on("edit:node", (e, data) => {
         ipcRenderer.send("edit:node", selectedNode);
     } else {
         console.log("ain't no node selected, broseph");
+    }
+});
+
+ipcRenderer.on("update:node", (e, data) => {
+    let node = nodes[data.id];
+    node.setText(data.text);
+    if (data.type !== node.type) {
+        let n = createNode(data.type);
+        n.id = node.id;
+        n.setCoords(node.x, node.y);
+        n.setText(data.text);
+        nodes[node.id] = n;
+        selectedNode = n;
     }
 });
