@@ -1,0 +1,1 @@
+[{"type":"user","text":"user action test","errorNode":null},{"type":"system","text":"system action test","errorNode":null},{"type":"decision","text":"decision test","errorNode":{"text":"error test"}},{"type":"user","text":"","errorNode":null},{"type":"system","text":"","errorNode":null},{"type":"decision","text":"","errorNode":{"text":""}}]

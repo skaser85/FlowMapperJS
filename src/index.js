@@ -20,8 +20,8 @@ const NODE_Y_GAP = 150;
 const NODE_X_SPACING = NODE_W + NODE_X_GAP;
 const NODE_Y_SPACING = NODE_H + NODE_Y_GAP;
 
-let selectedNode = null;
-let nodes = [];
+let SELECTED_NODE = null;
+let NODES = [];
 
 const sketch = (p) => {
     let menuStartY = 0;
@@ -33,11 +33,11 @@ const sketch = (p) => {
     p.draw = () => {
         p.background(255);
         let x = 100;
-        let y = 200;
+        let y = 100;
         let arrow_dir = ARROW_DIR.RIGHT;
         let hasErrorNode = false;
-        for (let i = 0; i < nodes.length; i++) {
-            let n = nodes[i];
+        for (let i = 0; i < NODES.length; i++) {
+            let n = NODES[i];
             if (n.errorNode) hasErrorNode = true;
             n.setCoords(x, y);
             arrow_dir === ARROW_DIR.RIGHT ? x += NODE_X_SPACING : x -= NODE_X_SPACING;
@@ -66,45 +66,11 @@ const sketch = (p) => {
 
     p.mouseClicked = () => {
         let clickHandled = false;
-        if (!clickHandled) clickHandled = checkNodes();
-        if (!clickHandled && selectedNode) {
-            selectedNode.selected = false;
-            selectedNode = null;
+        if (!clickHandled) clickHandled = checkNODES();
+        if (!clickHandled && SELECTED_NODE) {
+            SELECTED_NODE.selected = false;
+            SELECTED_NODE = null;
         } 
-    }
-
-    checkNodes = () => {
-        let clickHandled = false;
-        for (let n of nodes) {
-            if (n.mouseInside(p)) {
-                clickHandled = true;
-                setSelectedNode(n);
-            } else {
-                if (n.errorNode) {
-                    if (n.errorNode.mouseInside(p)) {
-                        clickHandled = true;
-                        setSelectedNode(n.errorNode);
-                    }
-                }
-            }
-        }
-        return clickHandled;
-    }
-
-    setSelectedNode = (n) => {
-        if (selectedNode) {
-            if (selectedNode === n) {
-                selectedNode.selected = false;
-                selectedNode = null;
-            } else {
-                selectedNode.selected = false;
-                n.selected = true;
-                selectedNode = n;
-            }
-        } else {
-            n.selected = true;
-            selectedNode = n;
-        }
     }
 
     p.mouseWheel = (e) => {
@@ -119,10 +85,46 @@ const sketch = (p) => {
         }
     }
 
+    // for functions that require access to p5
+    checkNODES = () => {
+        let clickHandled = false;
+        for (let n of NODES) {
+            if (n.mouseInside(p)) {
+                clickHandled = true;
+                setSELECTED_NODE(n);
+            } else {
+                if (n.errorNode) {
+                    if (n.errorNode.mouseInside(p)) {
+                        clickHandled = true;
+                        setSELECTED_NODE(n.errorNode);
+                    }
+                }
+            }
+        }
+        return clickHandled;
+    }
+
+    setSELECTED_NODE = (n) => {
+        if (SELECTED_NODE) {
+            if (SELECTED_NODE === n) {
+                SELECTED_NODE.selected = false;
+                SELECTED_NODE = null;
+            } else {
+                SELECTED_NODE.selected = false;
+                n.selected = true;
+                SELECTED_NODE = n;
+            }
+        } else {
+            n.selected = true;
+            SELECTED_NODE = n;
+        }
+    }
+
 }
 
 const app = new p5(sketch);
 
+// functions that do NOT require access to p5
 function createNode(type) {
     let n;
     switch(type) {
@@ -140,25 +142,26 @@ function createNode(type) {
     return n;
 }
 
+// Electron connector functions
 ipcRenderer.on("create:node", (e, data) => {
     let n = createNode(data.type);
     if (data.text) n.setText(data.text);
-    n.id = nodes.length;
-    nodes.push(n);
+    n.id = NODES.length;
+    NODES.push(n);
 });
 
 ipcRenderer.on("edit:node", (e, data) => {
-    if (selectedNode) {
-        ipcRenderer.send("edit:node", selectedNode);
+    if (SELECTED_NODE) {
+        ipcRenderer.send("edit:node", SELECTED_NODE);
     } else {
         console.log("ain't no node selected, broseph");
     }
 });
 
 ipcRenderer.on("update:node", (e, data) => {
-    let node = nodes[data.id];
+    let node = NODES[data.id];
     if (data.parent) {
-        node = nodes[data.parent.id].errorNode;
+        node = NODES[data.parent.id].errorNode;
     }
     node.setText(data.text);
     if (data.type !== node.type) {
@@ -166,7 +169,33 @@ ipcRenderer.on("update:node", (e, data) => {
         n.id = node.id;
         n.setCoords(node.x, node.y);
         n.setText(data.text);
-        nodes[node.id] = n;
-        selectedNode = n;
+        NODES[node.id] = n;
+        SELECTED_NODE = n;
     }
+});
+
+ipcRenderer.on("save:project", (e, data) => {
+    let allNodes = [];
+    NODES.forEach(n => {
+        allNodes.push({
+            type: n.type,
+            text: n.flattenText(),
+            errorNode: n.errorNode ? { text: n.errorNode.flattenText() } : null
+        });
+    });
+    ipcRenderer.send("save:project", allNodes);
+});
+
+ipcRenderer.on("open:project", (e, data) => {
+    NODES = [];
+    data.forEach(n => {
+        let node = createNode(n.type);
+        node.id = NODES.length;
+        node.setText(n.text);
+        if (n.errorNode) {
+            node.errorNode.parent = node;
+            node.errorNode.setText(n.errorNode.text);
+        }
+        NODES.push(node);
+    });
 });

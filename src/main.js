@@ -22,13 +22,30 @@ let menuTemplate = [
     label: "File",
     submenu: [
       { 
+        label: "Save Project...",
+        click: () => {
+          mainWindow.webContents.send("save:project");
+        },
+        id: "save-project",
+        enabled: true,
+        accelerator: "Ctrl+s"
+      },
+      { 
+        label: "Open Project...",
+        click: openProject,
+        id: "open-project",
+        enabled: true,
+        accelerator: "Ctrl+o"
+      },
+      { type: "separator" },
+      { 
         label: "Create User Action Node...",
         click: () => {
           mainWindow.webContents.send("create:node", {type: "user", text: ""});
         },
         id: "create-use-node",
         enabled: true,
-        accelerator: "Ctrl+u"
+        accelerator: "F1"
       },
       { 
         label: "Create System Action Node...",
@@ -37,7 +54,7 @@ let menuTemplate = [
         },
         id: "create-system-node",
         enabled: true,
-        accelerator: "Ctrl+s"
+        accelerator: "F2"
       },
       { 
         label: "Create Decision Node...",
@@ -46,7 +63,7 @@ let menuTemplate = [
         },
         id: "create-decision-node",
         enabled: true,
-        accelerator: "Ctrl+d"
+        accelerator: "F3"
       },
       { type: "separator" },
       { 
@@ -57,6 +74,15 @@ let menuTemplate = [
         id: "edit-selected-node",
         enabled: true,
         accelerator: "Ctrl+e"
+      },
+      { 
+        label: "Save Project...",
+        click: () => {
+          mainWindow.webContents.send("save:project");
+        },
+        id: "save-project",
+        enabled: true,
+        accelerator: "Ctrl+s"
       },
       { role: "quit" }
     ]
@@ -127,7 +153,7 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 
 const createWindow = () => {
     screen.getAllDisplays().forEach(d => {
-      if (d.displayFrequency === 144) display = d;
+      if (d.bounds.x === 1920) display = d;
     });
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -200,6 +226,29 @@ ipcMain.on("update:node", (e, data) => {
   mainWindow.webContents.send("update:node", data);
 });
 
+ipcMain.on("save:project", (e, data) => {
+  let projectData = JSON.stringify(data);
+  fs.writeFile("./test.json", projectData, (err) => {
+    if (err) {
+      console.log("Error writing project file: ", err);
+    } else {
+      console.log("Successfully wrote project file!");
+    }
+  });
+});
+
+function openProject() {
+  fs.readFile("./test.json", (err, data) => {
+    if (err) {
+      console.log("Error reading project file: ", err);
+    } else {
+      let projectData = JSON.parse(data);
+      mainWindow.webContents.send("open:project", projectData);
+      console.log("Successfully opened project file!");
+    }
+  });
+}
+
 function openNewWindow(data) {
   // https://jasonsturges.medium.com/multiple-window-electron-app-9dbffde8ce95
   if (editWindow !== null) {
@@ -208,7 +257,6 @@ function openNewWindow(data) {
 
   let width = 640;
   let height = 760;
-  console.log(display.bounds);
   editWindow = new BrowserWindow({
     show: false,
     width,
