@@ -1,4 +1,5 @@
 const { Button } = require("./Button.js");
+const { Connector } = require("./Connector.js");
 
 class Node {
     constructor(w, h) {
@@ -29,6 +30,14 @@ class Node {
         this.selectedFlashTimerDir = 0;
         this.flashAmt = 5;
         this.buttons = [];
+        this.connectors = [];
+        this.connectors = [
+            new Connector(this, this.cx, this.top, [0, 0, 0, 128]),
+            new Connector(this, this.cx, this.bottom, [255, 0, 0, 128]),
+            new Connector(this, this.left, this.cy, [0, 255, 0, 128]),
+            new Connector(this, this.right, this.cy, [0, 0, 255, 128])
+        ];
+        this.selectedConnector = null;
     }
 
     _setCenters() {
@@ -48,6 +57,10 @@ class Node {
         this.y = y;
         this._setCenters();
         this._setBounds();
+        this.connectors[0].setCoords(this.cx, this.top);
+        this.connectors[1].setCoords(this.cx, this.bottom);
+        this.connectors[2].setCoords(this.left, this.cy);
+        this.connectors[3].setCoords(this.right, this.cy);
     }
 
     setText(text) {
@@ -100,6 +113,7 @@ class Node {
 
     deselect() {
         this.selected = false;
+        if (this.selectedConnector) this.selectedConnector.deselect();
     }
 
     drawNode(p) {
@@ -235,7 +249,7 @@ class Node {
             }
         }
         if (this.selected) {
-            // idk, mang
+            this.connectors.forEach(c => c.draw(p));
         }
         if (this.errorNode) {
             this.errorNode.setCoords(this.x, this.y + 250);

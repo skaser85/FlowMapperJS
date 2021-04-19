@@ -65,16 +65,26 @@ const sketch = (p) => {
     }
 
     let timer = 0;
-    let delay = 300;
+    let delay = 200;
     let prevent = false;
     p.mouseClicked = (e) => {
         timer = setTimeout(() => {
             if (!prevent) {
                 let clickHandled = false;
-                clickHandled = checkNodes();
-                if (!clickHandled && SELECTED_NODE) {
-                    SELECTED_NODE.deselect();
-                    SELECTED_NODE = null;
+                if (SELECTED_NODE) {
+                    SELECTED_NODE.connectors.forEach(c => {
+                        if (c.mouseInside(p)) {
+                            c.select();
+                            clickHandled = true;
+                        }
+                    });
+                }
+                if (!clickHandled) {
+                    clickHandled = checkNodes();
+                    if (!clickHandled && SELECTED_NODE) {
+                        SELECTED_NODE.deselect();
+                        SELECTED_NODE = null;
+                    }
                 }
             }
             prevent = false;
