@@ -64,13 +64,33 @@ const sketch = (p) => {
         p.resizeCanvas(p.windowWidth, WINDOW_HEIGHT);
     }
 
-    p.mouseClicked = () => {
-        let clickHandled = false;
-        if (!clickHandled) clickHandled = checkNODES();
-        if (!clickHandled && SELECTED_NODE) {
-            SELECTED_NODE.selected = false;
-            SELECTED_NODE = null;
-        } 
+    let timer = 0;
+    let delay = 300;
+    let prevent = false;
+    p.mouseClicked = (e) => {
+        timer = setTimeout(() => {
+            if (!prevent) {
+                let clickHandled = false;
+                clickHandled = checkNodes();
+                if (!clickHandled && SELECTED_NODE) {
+                    SELECTED_NODE.deselect();
+                    SELECTED_NODE = null;
+                }
+            }
+            prevent = false;
+        }, delay);
+    }
+
+    p.doubleClicked = (e) => {
+        clearTimeout(timer);
+        prevent = true;
+        if (SELECTED_NODE) {
+            ipcRenderer.send("edit:node", SELECTED_NODE);
+        } else {
+            if (checkNodes()) {
+                ipcRenderer.send("edit:node", SELECTED_NODE);
+            }
+        }
     }
 
     p.mouseWheel = (e) => {
@@ -86,17 +106,17 @@ const sketch = (p) => {
     }
 
     // for functions that require access to p5
-    checkNODES = () => {
+    checkNodes = () => {
         let clickHandled = false;
         for (let n of NODES) {
             if (n.mouseInside(p)) {
                 clickHandled = true;
-                setSELECTED_NODE(n);
+                setSelectedNode(n);
             } else {
                 if (n.errorNode) {
                     if (n.errorNode.mouseInside(p)) {
                         clickHandled = true;
-                        setSELECTED_NODE(n.errorNode);
+                        setSelectedNode(n.errorNode);
                     }
                 }
             }
@@ -104,18 +124,18 @@ const sketch = (p) => {
         return clickHandled;
     }
 
-    setSELECTED_NODE = (n) => {
+    setSelectedNode = (n) => {
         if (SELECTED_NODE) {
             if (SELECTED_NODE === n) {
-                SELECTED_NODE.selected = false;
+                SELECTED_NODE.deselect();
                 SELECTED_NODE = null;
             } else {
-                SELECTED_NODE.selected = false;
-                n.selected = true;
+                SELECTED_NODE.deselect();
+                n.select();
                 SELECTED_NODE = n;
             }
         } else {
-            n.selected = true;
+            n.select();
             SELECTED_NODE = n;
         }
     }

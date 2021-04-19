@@ -1,4 +1,3 @@
-const { TouchBarOtherItemsProxy } = require("electron");
 const { Button } = require("./Button.js");
 
 class Node {
@@ -23,8 +22,12 @@ class Node {
         this.arrowWingYMax = 20;
         this.arrowYSpacing = this.h * 2;
         this.borderColor = [0, 0, 0];
-        this.selectedBorderColor = [255, 0, 255];
+        this.selectedBorderColor = [0, 0, 0];
         this.selected = false;
+        this.selectedFlashTimerInitialAmt = 255;
+        this.selectedFlashTimer = 255;
+        this.selectedFlashTimerDir = 0;
+        this.flashAmt = 5;
         this.buttons = [];
     }
 
@@ -90,6 +93,15 @@ class Node {
         return p.color(colorArr[0], colorArr[1], colorArr[2], alpha);
     }
 
+    select() {
+        this.selected = true;
+        this.selectedFlashTimer = this.selectedFlashTimerInitialAmt;
+    }
+
+    deselect() {
+        this.selected = false;
+    }
+
     drawNode(p) {
         p.push();
         // draw node
@@ -99,8 +111,26 @@ class Node {
         p.rect(this.x, this.y, this.w, this.h);
         // draw border
         p.noFill();
-        let strokeColor = this.selected ? this.createColor(p, this.selectedBorderColor, this.alpha) : this.createColor(p, this.borderColor, this.alpha);
-        let strokeWeight = this.selected ? 10 : 1;
+        let strokeColor;
+        let strokeWeight;
+        if (this.selected) {
+            strokeColor = this.createColor(p, this.selectedBorderColor, this.selectedFlashTimer);
+            strokeWeight = 3;
+            if (this.selectedFlashTimerDir === 0) {
+                this.selectedFlashTimer -= this.flashAmt;
+                if (this.selectedFlashTimer < 0) {
+                    this.selectedFlashTimerDir = 1;
+                }
+            } else {
+                this.selectedFlashTimer += this.flashAmt;
+                if (this.selectedFlashTimer > this.selectedFlashTimerInitialAmt) {
+                    this.selectedFlashTimerDir = 0;
+                }
+            }
+        } else {
+            strokeColor = this.createColor(p, this.borderColor, this.alpha);
+            strokeWeight = 1;
+        }
         p.stroke(strokeColor);
         p.strokeWeight(strokeWeight);
         p.rect(this.x, this.y, this.w, this.h);
