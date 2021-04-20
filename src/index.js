@@ -20,7 +20,7 @@ const NODE_Y_GAP = 150;
 const NODE_X_SPACING = NODE_W + NODE_X_GAP;
 const NODE_Y_SPACING = NODE_H + NODE_Y_GAP;
 
-let SELECTED_NODE = null;
+let SELECTED_NODES = [];
 let NODES = [];
 
 const sketch = (p) => {
@@ -64,41 +64,25 @@ const sketch = (p) => {
         p.resizeCanvas(p.windowWidth, WINDOW_HEIGHT);
     }
 
-    let timer = 0;
-    let delay = 200;
-    let prevent = false;
     p.mouseClicked = (e) => {
-        timer = setTimeout(() => {
-            if (!prevent) {
-                let clickHandled = false;
-                if (SELECTED_NODE) {
-                    SELECTED_NODE.connectors.forEach(c => {
-                        if (c.mouseInside(p)) {
-                            c.select();
-                            clickHandled = true;
-                        }
-                    });
-                }
-                if (!clickHandled) {
-                    clickHandled = checkNodes();
-                    if (!clickHandled && SELECTED_NODE) {
-                        SELECTED_NODE.deselect();
-                        SELECTED_NODE = null;
+        let clickHandled = false;        
+        if (SELECTED_NODES.length) {
+            SELECTED_NODES.forEach(n => {
+                n.connectors.forEach(c => {
+                    if (c.mouseInside(p)) {
+                        c.select();
+                        clickHandled = true;
                     }
-                }
-            }
-            prevent = false;
-        }, delay);
-    }
-
-    p.doubleClicked = (e) => {
-        clearTimeout(timer);
-        prevent = true;
-        if (SELECTED_NODE) {
-            ipcRenderer.send("edit:node", SELECTED_NODE);
-        } else {
-            if (checkNodes()) {
-                ipcRenderer.send("edit:node", SELECTED_NODE);
+                });
+            });
+        }
+        if (!clickHandled) {
+            clickHandled = checkNodes();
+            if (!clickHandled && SELECTED_NODES.length) {
+                SELECTED_NODES.forEach(n => {
+                    n.deselect();
+                });
+                SELECTED_NODES = [];
             }
         }
     }
@@ -121,12 +105,12 @@ const sketch = (p) => {
         for (let n of NODES) {
             if (n.mouseInside(p)) {
                 clickHandled = true;
-                setSelectedNode(n);
+                addSelectedNode(n);
             } else {
                 if (n.errorNode) {
                     if (n.errorNode.mouseInside(p)) {
                         clickHandled = true;
-                        setSelectedNode(n.errorNode);
+                        addSelectedNode(n.errorNode);
                     }
                 }
             }
@@ -134,19 +118,19 @@ const sketch = (p) => {
         return clickHandled;
     }
 
-    setSelectedNode = (n) => {
-        if (SELECTED_NODE) {
-            if (SELECTED_NODE === n) {
-                SELECTED_NODE.deselect();
-                SELECTED_NODE = null;
+    addSelectedNode = (n) => {
+        if (SELECTED_NODES.length) {
+            let ni = SELECTED_NODES.findIndex(s => s.id === n.id);
+            if (ni > -1) {
+                n.deselect();
+                SELECTED_NODES.splice(ni, 1);
             } else {
-                SELECTED_NODE.deselect();
                 n.select();
-                SELECTED_NODE = n;
+                SELECTED_NODES.push(n);
             }
         } else {
             n.select();
-            SELECTED_NODE = n;
+            SELECTED_NODES.push(n);
         }
     }
 
@@ -214,6 +198,18 @@ ipcRenderer.on("save:project", (e, data) => {
         });
     });
     ipcRenderer.send("save:project", allNodes);
+});
+
+ipcRenderer.on("save:project:as", (e, data) => {
+    let allNodes = [];
+    NODES.forEach(n => {
+        allNodes.push({
+            type: n.type,
+            text: n.flattenText(),
+            errorNode: n.errorNode ? { text: n.errorNode.flattenText() } : null
+        });
+    });
+    ipcRenderer.send("save:project:as", allNodes);
 });
 
 ipcRenderer.on("open:project", (e, data) => {

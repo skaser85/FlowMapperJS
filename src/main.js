@@ -1,6 +1,7 @@
-const { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, ipcRenderer, screen } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, ipcRenderer, screen, Cookies } = require('electron');
 // require("electron-reload")(__dirname);
 const path = require('path');
+const os = require("os");
 const fs = require("fs");
 const fsp = require("fs/promises");
 const util = require("util");
@@ -16,6 +17,8 @@ require('electron-reload')(__dirname, {
 let display;
 let mainWindow = null;
 let editWindow = null;
+let projectDir = "";
+let projectFileName = "";
 
 let menuTemplate = [
   {
@@ -29,6 +32,15 @@ let menuTemplate = [
         id: "save-project",
         enabled: true,
         accelerator: "Ctrl+s"
+      },
+      { 
+        label: "Save Project As...",
+        click: () => {
+          mainWindow.webContents.send("save:project:as");
+        },
+        id: "save-project-as",
+        enabled: true,
+        accelerator: "Ctrl+Shift+s"
       },
       { 
         label: "Open Project...",
@@ -74,15 +86,6 @@ let menuTemplate = [
         id: "edit-selected-node",
         enabled: true,
         accelerator: "Ctrl+e"
-      },
-      { 
-        label: "Save Project...",
-        click: () => {
-          mainWindow.webContents.send("save:project");
-        },
-        id: "save-project",
-        enabled: true,
-        accelerator: "Ctrl+s"
       },
       { role: "quit" }
     ]
@@ -226,27 +229,102 @@ ipcMain.on("update:node", (e, data) => {
   mainWindow.webContents.send("update:node", data);
 });
 
-ipcMain.on("save:project", (e, data) => {
+ipcMain.on("save:project", async (e, data) => {
   let projectData = JSON.stringify(data);
-  fs.writeFile("./test.json", projectData, (err) => {
+  if (projectDir === "" || projectFileName === "") {
+    let fileSelected = await setProjectDirectoryAndFileName();
+    if (fileSelected) {
+      writeProjectFile(projectData);
+    }
+  } else {
+    writeProjectFile(projectData);
+  }
+});
+
+ipcMain.on("save:project:as", async (e, data) => {
+  let projectData = JSON.stringify(data);
+  let fileSelected = await setProjectDirectoryAndFileName();
+  if (fileSelected) {
+    writeProjectFile(projectData);
+  }
+});
+
+function setProjectDirectoryAndFileName() {
+  return new Promise((resolve, reject) => {
+    dialog.showSaveDialog(mainWindow, {
+      title: "Save Project File",
+      defaultPath: `${os.homedir()}`,
+      buttonLabel: "Select File",
+      properties: ["openFile"],
+      filters: [{name: 'JSON', extensions: ["json"]}]
+    }).then(result => {
+      if (!result.canceled) {
+        projectFileName = path.basename(result.filePath);
+        projectDir = path.dirname(result.filePath);
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    })
+    .catch(err => {
+      console.log("Error selecting project directory: ", err);
+      reject();
+    });
+  });
+}
+
+function writeProjectFile(data) {
+  let fp = `${projectDir}\\${projectFileName}`;
+  fs.writeFile(fp, data, (err) => {
     if (err) {
       console.log("Error writing project file: ", err);
     } else {
       console.log("Successfully wrote project file!");
+      console.log(fp);
     }
   });
-});
+}
 
-function openProject() {
-  fs.readFile("./test.json", (err, data) => {
-    if (err) {
-      console.log("Error reading project file: ", err);
-    } else {
-      let projectData = JSON.parse(data);
-      mainWindow.webContents.send("open:project", projectData);
-      console.log("Successfully opened project file!");
-    }
+function getProjectFile() {
+  return new Promise((resolve, reject) => {
+    dialog.showOpenDialog(mainWindow, {
+      title: "Select Project File",
+      defaultPath: `${os.homedir()}`,
+      buttonLabel: "Select File",
+      properties: ["openFile"],
+      filters: [{name: 'JSON', extensions: ["json"]}],
+      multiSelections: false
+    }).then(result => {
+      if (!result.canceled) {
+        let fp = result.filePaths[0];
+        projectFileName = path.basename(fp);
+        projectDir = path.dirname(fp);
+        resolve(fp);
+      } else {
+        resolve("");
+      }
+    })
+    .catch(err => {
+      console.log("Error opening project file: ", err);
+      reject();
+    });
   });
+}
+
+async function openProject() {
+  let fp = await getProjectFile();
+  if (fp) {
+    fs.readFile(fp, (err, data) => {
+      if (err) {
+        console.log("Error reading project file: ", err);
+      } else {
+        let projectData = JSON.parse(data);
+        mainWindow.webContents.send("open:project", projectData);
+        console.log("Successfully opened project file!");
+        console.log(fp);
+      }
+    });
+  }
 }
 
 function openNewWindow(data) {
