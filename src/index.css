@@ -4,3 +4,81 @@ body {
   margin: 0;
   display: flex;
 }
+
+#sidebar {
+  width: 200px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.btn {
+  width: 75%;
+  margin: 10px 0;
+  border: none;
+  outline: none;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 2px 2px 2px #ccc;
+  transition: all .2s ease-in;
+  font-size: 15px;
+  /* font-weight: 700; */
+  justify-self: end;
+  user-select: none;
+}
+
+.btn:hover {
+    cursor: pointer;
+    box-shadow: 2px 2px 2px #999;
+}
+
+.btn:active {
+    cursor: pointer;
+    box-shadow: 2px 2px 2px #ddd;
+}
+
+.btn.user-action {
+  background: rgb(227, 201, 84)
+}
+
+.btn.user-action:hover {
+  background: rgba(245, 225, 135)
+}
+
+.btn.system-action {
+  background: rgb(84, 196, 227)
+}
+
+.btn.system-action:hover {
+  background: rgba(94, 220, 255)
+}
+
+.btn.decision {
+  background: rgb(84, 227, 105)
+}
+
+.btn.decision:hover {
+  background: rgba(97, 255, 120)
+}
+
+.btn.edit {
+  background: rgb(227, 84, 227)
+}
+
+.btn.edit:hover {
+  background: rgba(250, 120, 255)
+}
+
+.btn.delete {
+  background: rgb(227, 84, 84);
+  color: white;
+}
+
+.btn.delete:hover {
+  background: rgba(255, 120, 120)
+}
+
+#flow-canvas {
+  border: 3px solid chartreuse;
+}

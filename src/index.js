@@ -8,6 +8,9 @@ const p5 = require("p5");
 const { UserActionNode, ErrorNode, DecisionNode, SystemActionNode } = require("./node.js");
 const { Button } = require("./Button.js");
 
+let flowCanvas;
+let canvas_width = 0;
+const MENU_WIDTH = 200;
 const WINDOW_HEIGHT = 10000;
 const ARROW_DIR = {
     LEFT: 0,
@@ -23,20 +26,23 @@ const NODE_Y_SPACING = NODE_H + NODE_Y_GAP;
 let SELECTED_NODES = [];
 let NODES = [];
 
-let PROJECT_DIR = "";
-let PROJECT_FILENAME = "";
+let PROJECT_DIR = "no project open";
+let PROJECT_FILENAME = "???";
 
 const sketch = (p) => {
     let menuStartY = 0;
     let deltaOffset = 0;
     p.setup = () => {
-        p.createCanvas(p.windowWidth, WINDOW_HEIGHT)
+        canvas_width = p.windowWidth - MENU_WIDTH - 25;
+        flowCanvas = p.createCanvas(canvas_width, WINDOW_HEIGHT)
+        flowCanvas.position(MENU_WIDTH, 0);
+        flowCanvas.elt.id = "flow-canvas";
     }
 
     p.draw = () => {
         p.background(255);
         let x = 100;
-        let y = 100;
+        let y = 75;
         let arrow_dir = ARROW_DIR.RIGHT;
         let hasErrorNode = false;
         for (let i = 0; i < NODES.length; i++) {
@@ -44,7 +50,8 @@ const sketch = (p) => {
             if (n.errorNode) hasErrorNode = true;
             n.setCoords(x, y);
             arrow_dir === ARROW_DIR.RIGHT ? x += NODE_X_SPACING : x -= NODE_X_SPACING;
-            if (x + NODE_X_GAP > p.windowWidth) {
+            // console.log(x, canvas_width);
+            if (x > canvas_width) {
                 n.draw(p, arrow_dir, true, hasErrorNode);
                 x -= NODE_X_SPACING;
                 y += NODE_Y_SPACING + (hasErrorNode ? 200 : 0);
@@ -60,20 +67,18 @@ const sketch = (p) => {
                 n.draw(p, arrow_dir, false);
             }
         }
-        if (PROJECT_DIR) {
-            p.push();
-            p.textFont("CONSOLAS");
-            p.textSize(12);
-            // p.textAlign(p.CENTER, p.CENTER);
-            p.text("Project Directory: " + PROJECT_DIR, 10, 20);
-            p.text("Project File Name: " + PROJECT_FILENAME, 10, 40);
-            p.pop();
-        }
+        p.push();
+        p.textFont("CONSOLAS");
+        p.textSize(12);
+        p.text("Project Directory: " + PROJECT_DIR, 10, 20);
+        p.text("Project File Name: " + PROJECT_FILENAME, 10, 40);
+        p.pop();
         // p.noLoop();
     }
 
     p.windowResized = () => {
-        p.resizeCanvas(p.windowWidth, WINDOW_HEIGHT);
+        canvas_width = p.windowWidth - MENU_WIDTH - 25;
+        p.resizeCanvas(canvas_width, WINDOW_HEIGHT);
     }
 
     p.mouseClicked = (e) => {
