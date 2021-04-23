@@ -23,6 +23,9 @@ const NODE_Y_SPACING = NODE_H + NODE_Y_GAP;
 let SELECTED_NODES = [];
 let NODES = [];
 
+let PROJECT_DIR = "";
+let PROJECT_FILENAME = "";
+
 const sketch = (p) => {
     let menuStartY = 0;
     let deltaOffset = 0;
@@ -56,6 +59,15 @@ const sketch = (p) => {
             } else {
                 n.draw(p, arrow_dir, false);
             }
+        }
+        if (PROJECT_DIR) {
+            p.push();
+            p.textFont("CONSOLAS");
+            p.textSize(12);
+            // p.textAlign(p.CENTER, p.CENTER);
+            p.text("Project Directory: " + PROJECT_DIR, 10, 20);
+            p.text("Project File Name: " + PROJECT_FILENAME, 10, 40);
+            p.pop();
         }
         // p.noLoop();
     }
@@ -165,8 +177,27 @@ ipcRenderer.on("create:node", (e, data) => {
 });
 
 ipcRenderer.on("edit:node", (e, data) => {
-    if (SELECTED_NODE) {
-        ipcRenderer.send("edit:node", SELECTED_NODE);
+    if (SELECTED_NODES.length) {
+        if (SELECTED_NODES.length > 1) {
+            console.log("can't edit more than 1 node a time");
+        } else {
+            ipcRenderer.send("edit:node", SELECTED_NODES[0]);
+        }
+    } else {
+        console.log("ain't no node selected, broseph");
+    }
+});
+
+ipcRenderer.on("delete:node", (e, data) => {
+    if (SELECTED_NODES.length) {
+        SELECTED_NODES.forEach(n => {
+            NODES.splice(n.id, 1);
+        });
+        NODES.forEach((n, i) => {
+            n.id = i
+            n.deselect();
+        });
+        SELECTED_NODES = [];
     } else {
         console.log("ain't no node selected, broseph");
     }
@@ -214,7 +245,7 @@ ipcRenderer.on("save:project:as", (e, data) => {
 
 ipcRenderer.on("open:project", (e, data) => {
     NODES = [];
-    data.forEach(n => {
+    data.data.forEach(n => {
         let node = createNode(n.type);
         node.id = NODES.length;
         node.setText(n.text);
@@ -224,4 +255,6 @@ ipcRenderer.on("open:project", (e, data) => {
         }
         NODES.push(node);
     });
+    PROJECT_DIR = data.path;
+    PROJECT_FILENAME = data.fileName;
 });

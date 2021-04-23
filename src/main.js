@@ -87,6 +87,15 @@ let menuTemplate = [
         enabled: true,
         accelerator: "Ctrl+e"
       },
+      { 
+        label: "Delete Selected Node...",
+        click: () => {
+          mainWindow.webContents.send("delete:node");
+        },
+        id: "delete-selected-node",
+        enabled: true,
+        accelerator: "delete"
+      },
       { role: "quit" }
     ]
   },
@@ -319,7 +328,7 @@ async function openProject() {
         console.log("Error reading project file: ", err);
       } else {
         let projectData = JSON.parse(data);
-        mainWindow.webContents.send("open:project", projectData);
+        mainWindow.webContents.send("open:project", { data: projectData, path: projectDir, fileName: projectFileName });
         console.log("Successfully opened project file!");
         console.log(fp);
       }
