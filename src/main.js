@@ -25,6 +25,21 @@ let menuTemplate = [
     label: "File",
     submenu: [
       { 
+        label: "Open Project...",
+        click: openProject,
+        id: "open-project",
+        enabled: true,
+        accelerator: "Ctrl+o"
+      },
+      { 
+        label: "New Project...",
+        click: newProject,
+        id: "new-project",
+        enabled: true,
+        accelerator: "Ctrl+n"
+      },
+      { type: "separator" },      
+      { 
         label: "Save Project...",
         click: () => {
           mainWindow.webContents.send("save:project");
@@ -42,14 +57,13 @@ let menuTemplate = [
         enabled: true,
         accelerator: "Ctrl+Shift+s"
       },
-      { 
-        label: "Open Project...",
-        click: openProject,
-        id: "open-project",
-        enabled: true,
-        accelerator: "Ctrl+o"
-      },
       { type: "separator" },
+      { role: "quit" }
+    ]
+  },
+  {
+    label: "Node",
+    submenu: [      
       { 
         label: "Create User Action Node...",
         click: () => {
@@ -96,7 +110,6 @@ let menuTemplate = [
         enabled: true,
         accelerator: "delete"
       },
-      { role: "quit" }
     ]
   },
   {
@@ -255,7 +268,16 @@ ipcMain.on("save:project:as", async (e, data) => {
   let fileSelected = await setProjectDirectoryAndFileName();
   if (fileSelected) {
     writeProjectFile(projectData);
+    mainWindow.webContents.send("project:saved:as", { path: projectDir, fileName: projectFileName })
   }
+});
+
+ipcMain.on("open:project", (e, data) => {
+  openProject();
+});
+
+ipcMain.on("new:project", (e, data) => {
+  newProject();
 });
 
 function setProjectDirectoryAndFileName() {
@@ -376,4 +398,8 @@ function openNewWindow(data) {
   editWindow.on("focus", () => {
     // idk - menu stuff?
   });
+}
+
+function newProject() {
+  mainWindow.webContents.send("new:project")
 }

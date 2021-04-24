@@ -6,11 +6,13 @@ body {
 }
 
 #sidebar {
+  position: fixed;
   width: 200px;
   height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-top: 20px;
 }
 
 .btn {
@@ -26,6 +28,14 @@ body {
   /* font-weight: 700; */
   justify-self: end;
   user-select: none;
+  position: relative;
+}
+
+.btn::after {
+  position: absolute;
+  top: -20%;
+  left: 0;
+  font-size: 10px;
 }
 
 .btn:hover {
@@ -46,12 +56,20 @@ body {
   background: rgba(245, 225, 135)
 }
 
+.btn.user-action::after {
+  content: "F1";
+}
+
 .btn.system-action {
   background: rgb(84, 196, 227)
 }
 
 .btn.system-action:hover {
   background: rgba(94, 220, 255)
+}
+
+.btn.system-action::after {
+  content: "F2";
 }
 
 .btn.decision {
@@ -62,12 +80,22 @@ body {
   background: rgba(97, 255, 120)
 }
 
+.btn.decision::after {
+  content: "F3";
+  top: -30%;
+}
+
 .btn.edit {
   background: rgb(227, 84, 227)
 }
 
 .btn.edit:hover {
   background: rgba(250, 120, 255)
+}
+
+.btn.edit::after {
+  content: "Ctrl+e";
+  top: -30%;
 }
 
 .btn.delete {
@@ -77,6 +105,38 @@ body {
 
 .btn.delete:hover {
   background: rgba(255, 120, 120)
+}
+
+.btn.delete::after {
+  content: "delete";
+  top: -30%;
+  color: black;
+}
+
+.btn.open-project::after {
+  content: "Ctrl+o";
+  top: -30%;
+}
+
+.btn.new-project::after {
+  content: "Ctrl+n";
+  top: -30%;
+}
+
+.btn.save-project::after {
+  content: "Ctrl+s";
+  top: -30%;
+}
+
+.btn.save-project-as::after {
+  content: "Ctrl+Shift+s";
+  top: -30%;
+}
+
+.separator {
+  margin: 10px 0;
+  border: 1px solid rgba(0, 0, 0, .25);
+  width: 80%;
 }
 
 #flow-canvas {

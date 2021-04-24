@@ -8,6 +8,16 @@ const p5 = require("p5");
 const { UserActionNode, ErrorNode, DecisionNode, SystemActionNode } = require("./node.js");
 const { Button } = require("./Button.js");
 
+const addUserNodeBtn = document.querySelector("#add-user-action-node");
+const addSystemNodeBtn = document.querySelector("#add-system-action-node");
+const addDecisionBtn = document.querySelector("#add-decision-node");
+const editNodeBtn = document.querySelector("#edit-node");
+const deleteNodeBtn = document.querySelector("#delete-node");
+const openProjectBtn = document.querySelector("#open-project");
+const newProjectBtn = document.querySelector("#new-project");
+const saveProjectBtn = document.querySelector("#save-project");
+const saveProjectAsBtn = document.querySelector("#save-project-as");
+
 let flowCanvas;
 let canvas_width = 0;
 const MENU_WIDTH = 200;
@@ -82,24 +92,28 @@ const sketch = (p) => {
     }
 
     p.mouseClicked = (e) => {
-        let clickHandled = false;        
-        if (SELECTED_NODES.length) {
-            SELECTED_NODES.forEach(n => {
-                n.connectors.forEach(c => {
-                    if (c.mouseInside(p)) {
-                        c.select();
-                        clickHandled = true;
-                    }
-                });
-            });
-        }
-        if (!clickHandled) {
-            clickHandled = checkNodes();
-            if (!clickHandled && SELECTED_NODES.length) {
+        // only handle clicks that occur when
+        // the mouse is over the canvas
+        if (p.mouseX >= 0 && p.mouseY >= 0) {
+            let clickHandled = false;
+            if (SELECTED_NODES.length) {
                 SELECTED_NODES.forEach(n => {
-                    n.deselect();
+                    n.connectors.forEach(c => {
+                        if (c.mouseInside(p)) {
+                            c.select();
+                            clickHandled = true;
+                        }
+                    });
                 });
-                SELECTED_NODES = [];
+            }
+            if (!clickHandled) {
+                clickHandled = checkNodes();
+                if (!clickHandled && SELECTED_NODES.length) {
+                    SELECTED_NODES.forEach(n => {
+                        n.deselect();
+                    });
+                    SELECTED_NODES = [];
+                }
             }
         }
     }
@@ -173,27 +187,7 @@ function createNode(type) {
     return n;
 }
 
-// Electron connector functions
-ipcRenderer.on("create:node", (e, data) => {
-    let n = createNode(data.type);
-    if (data.text) n.setText(data.text);
-    n.id = NODES.length;
-    NODES.push(n);
-});
-
-ipcRenderer.on("edit:node", (e, data) => {
-    if (SELECTED_NODES.length) {
-        if (SELECTED_NODES.length > 1) {
-            console.log("can't edit more than 1 node a time");
-        } else {
-            ipcRenderer.send("edit:node", SELECTED_NODES[0]);
-        }
-    } else {
-        console.log("ain't no node selected, broseph");
-    }
-});
-
-ipcRenderer.on("delete:node", (e, data) => {
+function deleteNode() {
     if (SELECTED_NODES.length) {
         SELECTED_NODES.forEach(n => {
             NODES.splice(n.id, 1);
@@ -206,6 +200,54 @@ ipcRenderer.on("delete:node", (e, data) => {
     } else {
         console.log("ain't no node selected, broseph");
     }
+}
+
+function editNode() {
+    if (SELECTED_NODES.length) {
+        if (SELECTED_NODES.length > 1) {
+            console.log("can't edit more than 1 node a time");
+        } else {
+            ipcRenderer.send("edit:node", SELECTED_NODES[0]);
+        }
+    } else {
+        console.log("ain't no node selected, broseph");
+    }
+}
+
+function getSaveNodes() {
+    let allNodes = [];
+    NODES.forEach(n => {
+        allNodes.push({
+            type: n.type,
+            text: n.flattenText(),
+            errorNode: n.errorNode ? { text: n.errorNode.flattenText() } : null
+        });
+    });
+    return allNodes;
+}
+
+function saveProject() {
+    ipcRenderer.send("save:project", getSaveNodes());
+}
+
+function saveProjectAs() {
+    ipcRenderer.send("save:project:as", getSaveNodes());
+}
+
+// Electron connector functions
+ipcRenderer.on("create:node", (e, data) => {
+    let n = createNode(data.type);
+    if (data.text) n.setText(data.text);
+    n.id = NODES.length;
+    NODES.push(n);
+});
+
+ipcRenderer.on("edit:node", (e, data) => {
+    editNode();
+});
+
+ipcRenderer.on("delete:node", (e, data) => {
+    deleteNode();
 });
 
 ipcRenderer.on("update:node", (e, data) => {
@@ -217,6 +259,7 @@ ipcRenderer.on("update:node", (e, data) => {
     if (data.type !== node.type) {
         let n = createNode(data.type);
         n.id = node.id;
+        n.selected = node.selected;
         n.setCoords(node.x, node.y);
         n.setText(data.text);
         NODES[node.id] = n;
@@ -225,27 +268,11 @@ ipcRenderer.on("update:node", (e, data) => {
 });
 
 ipcRenderer.on("save:project", (e, data) => {
-    let allNodes = [];
-    NODES.forEach(n => {
-        allNodes.push({
-            type: n.type,
-            text: n.flattenText(),
-            errorNode: n.errorNode ? { text: n.errorNode.flattenText() } : null
-        });
-    });
-    ipcRenderer.send("save:project", allNodes);
+    saveProject();
 });
 
 ipcRenderer.on("save:project:as", (e, data) => {
-    let allNodes = [];
-    NODES.forEach(n => {
-        allNodes.push({
-            type: n.type,
-            text: n.flattenText(),
-            errorNode: n.errorNode ? { text: n.errorNode.flattenText() } : null
-        });
-    });
-    ipcRenderer.send("save:project:as", allNodes);
+    saveProjectAs();
 });
 
 ipcRenderer.on("open:project", (e, data) => {
@@ -262,4 +289,56 @@ ipcRenderer.on("open:project", (e, data) => {
     });
     PROJECT_DIR = data.path;
     PROJECT_FILENAME = data.fileName;
+});
+
+ipcRenderer.on("project:saved:as", (e, data) => {
+    PROJECT_DIR = data.path;
+    PROJECT_FILENAME = data.fileName;
+});
+
+ipcRenderer.on("new:project", (e, data) => {
+    PROJECT_DIR = "new project - unsaved";
+    PROJECT_FILENAME = "new project - unsaved";
+});
+
+addUserNodeBtn.addEventListener("click", (e) => {
+    let n = createNode("user");
+    n.id = NODES.length;
+    NODES.push(n);
+});
+
+addSystemNodeBtn.addEventListener("click", (e) => {
+    let n = createNode("system");
+    n.id = NODES.length;
+    NODES.push(n);
+});
+
+addDecisionBtn.addEventListener("click", (e) => {
+    let n = createNode("decision");
+    n.id = NODES.length;
+    NODES.push(n);
+});
+
+editNodeBtn.addEventListener("click", (e) => {
+    editNode();
+});
+
+deleteNodeBtn.addEventListener("click", (e) => {
+    deleteNode();
+});
+
+openProjectBtn.addEventListener("click", (e) => {
+    ipcRenderer.send("open:project");
+});
+
+newProjectBtn.addEventListener("click", (e) => {
+    ipcRenderer.send("new:project");
+});
+
+saveProjectBtn.addEventListener("click", (e) => {
+    saveProject();
+});
+
+saveProjectAsBtn.addEventListener("click", (e) => {
+    saveProjectAs();
 });
