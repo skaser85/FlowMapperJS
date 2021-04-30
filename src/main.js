@@ -19,6 +19,7 @@ let mainWindow = null;
 let editWindow = null;
 let projectDir = "";
 let projectFileName = "";
+let projectLastSavedDate = "";
 
 let menuTemplate = [
   {
@@ -257,9 +258,11 @@ ipcMain.on("save:project", async (e, data) => {
     let fileSelected = await setProjectDirectoryAndFileName();
     if (fileSelected) {
       writeProjectFile(projectData);
+      mainWindow.webContents.send("project:saved", { path: projectDir, fileName: projectFileName, lastSaved: projectLastSavedDate });
     }
   } else {
     writeProjectFile(projectData);
+    mainWindow.webContents.send("project:saved", { path: projectDir, fileName: projectFileName, lastSaved: projectLastSavedDate });
   }
 });
 
@@ -268,7 +271,7 @@ ipcMain.on("save:project:as", async (e, data) => {
   let fileSelected = await setProjectDirectoryAndFileName();
   if (fileSelected) {
     writeProjectFile(projectData);
-    mainWindow.webContents.send("project:saved:as", { path: projectDir, fileName: projectFileName })
+    mainWindow.webContents.send("project:saved:as", { path: projectDir, fileName: projectFileName, lastSaved: projectLastSavedDate });
   }
 });
 
@@ -292,7 +295,14 @@ function setProjectDirectoryAndFileName() {
       if (!result.canceled) {
         projectFileName = path.basename(result.filePath);
         projectDir = path.dirname(result.filePath);
-        resolve(true);
+        fs.stat(result.filePath, (err, stats) => {
+          if (err) {
+            console.log("Error getting the file's stats: ", err);
+            reject();
+          }
+          projectLastSavedDate = stats.mtime;
+          resolve(true);
+        });
       } else {
         resolve(false);
       }
@@ -312,6 +322,12 @@ function writeProjectFile(data) {
     } else {
       console.log("Successfully wrote project file!");
       console.log(fp);
+      fs.stat(fp, (err, stats) => {
+        if (err) {
+          console.log("Error getting the file's stats: ", err);
+        }
+        projectLastSavedDate = stats.mtime;
+      });
     }
   });
 }
@@ -330,7 +346,14 @@ function getProjectFile() {
         let fp = result.filePaths[0];
         projectFileName = path.basename(fp);
         projectDir = path.dirname(fp);
-        resolve(fp);
+        fs.stat(fp, (err, stats) => {
+          if (err) {
+            console.log("Error getting the file's stats: ", err);
+            reject();
+          }
+          projectLastSavedDate = stats.mtime;
+          resolve(fp);
+        });
       } else {
         resolve("");
       }
@@ -350,7 +373,7 @@ async function openProject() {
         console.log("Error reading project file: ", err);
       } else {
         let projectData = JSON.parse(data);
-        mainWindow.webContents.send("open:project", { data: projectData, path: projectDir, fileName: projectFileName });
+        mainWindow.webContents.send("open:project", { data: projectData, path: projectDir, fileName: projectFileName, lastSaved: projectLastSavedDate });
         console.log("Successfully opened project file!");
         console.log(fp);
       }

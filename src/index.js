@@ -38,6 +38,9 @@ let NODES = [];
 
 let PROJECT_DIR = "no project open";
 let PROJECT_FILENAME = "???";
+let PROJECT_LAST_SAVED = "";
+
+let NEEDS_SAVED = false;
 
 const sketch = (p) => {
     let menuStartY = 0;
@@ -81,7 +84,8 @@ const sketch = (p) => {
         p.textFont("CONSOLAS");
         p.textSize(12);
         p.text("Project Directory: " + PROJECT_DIR, 10, 20);
-        p.text("Project File Name: " + PROJECT_FILENAME, 10, 40);
+        p.text("Project File Name: " + PROJECT_FILENAME + (NEEDS_SAVED ? "*" : ""), 10, 40);
+        p.text("Project Last Saved: " + PROJECT_LAST_SAVED, 10, 60);
         p.pop();
         // p.noLoop();
     }
@@ -197,6 +201,7 @@ function deleteNode() {
             n.deselect();
         });
         SELECTED_NODES = [];
+        NEEDS_SAVED = true;
     } else {
         console.log("ain't no node selected, broseph");
     }
@@ -204,11 +209,7 @@ function deleteNode() {
 
 function editNode() {
     if (SELECTED_NODES.length) {
-        if (SELECTED_NODES.length > 1) {
-            console.log("can't edit more than 1 node a time");
-        } else {
-            ipcRenderer.send("edit:node", SELECTED_NODES[0]);
-        }
+        ipcRenderer.send("edit:node", SELECTED_NODES[SELECTED_NODES.length - 1]);
     } else {
         console.log("ain't no node selected, broseph");
     }
@@ -234,12 +235,17 @@ function saveProjectAs() {
     ipcRenderer.send("save:project:as", getSaveNodes());
 }
 
+function updateNodesList(n) {
+    NODES.push(n);
+    NEEDS_SAVED = true;
+}
+
 // Electron connector functions
 ipcRenderer.on("create:node", (e, data) => {
     let n = createNode(data.type);
     if (data.text) n.setText(data.text);
     n.id = NODES.length;
-    NODES.push(n);
+    updateNodesList(n);
 });
 
 ipcRenderer.on("edit:node", (e, data) => {
@@ -285,38 +291,50 @@ ipcRenderer.on("open:project", (e, data) => {
             node.errorNode.parent = node;
             node.errorNode.setText(n.errorNode.text);
         }
-        NODES.push(node);
+        updateNodesList(node);
     });
     PROJECT_DIR = data.path;
     PROJECT_FILENAME = data.fileName;
+    PROJECT_LAST_SAVED = data.lastSaved;
+    NEEDS_SAVED = false;
+});
+ipcRenderer.on("project:saved", (e, data) => {
+    PROJECT_DIR = data.path;
+    PROJECT_FILENAME = data.fileName;
+    PROJECT_LAST_SAVED = data.lastSaved;
+    NEEDS_SAVED = false;
 });
 
 ipcRenderer.on("project:saved:as", (e, data) => {
     PROJECT_DIR = data.path;
     PROJECT_FILENAME = data.fileName;
+    PROJECT_LAST_SAVED = data.lastSaved;
+    NEEDS_SAVED = false;
 });
 
 ipcRenderer.on("new:project", (e, data) => {
     PROJECT_DIR = "new project - unsaved";
     PROJECT_FILENAME = "new project - unsaved";
+    PROJECT_LAST_SAVED = "";
+    NEEDS_SAVED = true;
 });
 
 addUserNodeBtn.addEventListener("click", (e) => {
     let n = createNode("user");
     n.id = NODES.length;
-    NODES.push(n);
+    updateNodesList(n);
 });
 
 addSystemNodeBtn.addEventListener("click", (e) => {
     let n = createNode("system");
     n.id = NODES.length;
-    NODES.push(n);
+    updateNodesList(n);
 });
 
 addDecisionBtn.addEventListener("click", (e) => {
     let n = createNode("decision");
     n.id = NODES.length;
-    NODES.push(n);
+    updateNodesList(n);
 });
 
 editNodeBtn.addEventListener("click", (e) => {
