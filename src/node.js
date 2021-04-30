@@ -17,10 +17,10 @@ class Node {
         this.font = "Consolas";
         this.fontSize = 16;
         this.lineSpacing = 3;
-        this.arrowLineLen = 100;
+        this.arrowLineLen = 50;
         this.arrowWingLen = this.arrowLineLen * .3;
-        this.arrowWingXSpacing = 20;
-        this.arrowWingYMax = 20;
+        this.arrowWingXSpacing = 10;
+        this.arrowWingYMax = 10;
         this.arrowYSpacing = this.h * 2;
         this.borderColor = [0, 0, 0];
         this.selectedBorderColor = [0, 0, 0];
@@ -226,7 +226,7 @@ class Node {
                 p.push();
                 p.stroke(0);
                 p.strokeWeight(3);
-                let bigYSpacing = this.cy + this.arrowYSpacing + (prevRowHadError ? 200 : 0);
+                let bigYSpacing = this.cy + this.arrowYSpacing + (prevRowHadError ? 85 : 0);
                 let outerX;
                 if (dir === 0) { //left
                     outerX = this.left - this.arrowLineLen/2;
@@ -252,33 +252,35 @@ class Node {
             this.connectors.forEach(c => c.draw(p));
         }
         if (this.errorNode) {
-            this.errorNode.setCoords(this.x, this.y + 250);
+            this.errorNode.setCoords(this.x, this.bottom + 37.5);
             this.errorNode.draw(p);
             this.drawArrow(p, {x: this.cx, y: this.bottom}, {x: this.cx, y: this.errorNode.top});
         }
         if (this.type === "decision") {
             p.push();
-            let boxW = 35;
-            let boxH = 20;
+            let boxW = 30;
+            let boxH = 15;
             p.textFont(this.font);
-            p.textSize(this.fontSize);
+            p.textSize(this.fontSize * .8);
             p.textAlign(p.CENTER, p.CENTER);
             p.fill(this.createColor(p, this.yesTagColor, 255));
             p.stroke(0);
             p.strokeWeight(1);
+            let d = 3;
             if (dir === 0) { // left
-                p.rect(this.left - this.arrowLineLen/2, this.cy - boxH/2, boxW, boxH);
+                p.rect(this.left - d - boxW, this.cy - boxH/2, boxW, boxH);
                 p.fill(0);
-                p.text("YES", this.left - this.arrowLineLen/2 + boxW/2, this.cy);
+                p.text("YES", this.left - d - boxW/2, this.cy);
             } else { // right
-                p.rect(this.right + this.arrowLineLen/2 - boxW/2, this.cy - boxH/2, boxW, boxH);
+                p.rect(this.right + d, this.cy - boxH/2, boxW, boxH);
                 p.fill(0);
-                p.text("YES", this.right + this.arrowLineLen/2, this.cy);
+                p.text("YES", this.right + d + boxW/2, this.cy);
             }
             p.fill(this.createColor(p, this.noTagColor, 255));
-            p.rect(this.cx - boxW/2, this.bottom + boxH, boxW, boxH);
-            p.fill(0);
-            p.text("NO", this.cx, this.bottom + boxH * 1.5);
+            p.rect(this.cx - boxW/2, this.bottom + d, boxW, boxH);
+            p.textSize(this.fontSize);
+            p.fill(255);
+            p.text("NO", this.cx, this.bottom + d + boxH/2 + 1);
             p.pop();
         }
         // testing only

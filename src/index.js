@@ -26,10 +26,10 @@ const ARROW_DIR = {
     LEFT: 0,
     RIGHT: 1
 }
-const NODE_W = 250;
-const NODE_H = 150;
-const NODE_X_GAP = 100;
-const NODE_Y_GAP = 150;
+const NODE_W = 200;
+const NODE_H = 100;
+const NODE_X_GAP = 50;
+const NODE_Y_GAP = 75;
 const NODE_X_SPACING = NODE_W + NODE_X_GAP;
 const NODE_Y_SPACING = NODE_H + NODE_Y_GAP;
 
@@ -67,13 +67,13 @@ const sketch = (p) => {
             if (x > canvas_width) {
                 n.draw(p, arrow_dir, true, hasErrorNode);
                 x -= NODE_X_SPACING;
-                y += NODE_Y_SPACING + (hasErrorNode ? 200 : 0);
+                y += NODE_Y_SPACING + (hasErrorNode ? (NODE_Y_GAP * 1.5) : 0);
                 arrow_dir = ARROW_DIR.LEFT;
                 hasErrorNode = false;
             } else if (x - NODE_X_GAP < 0) {
                 n.draw(p, arrow_dir, true, hasErrorNode);
                 x += NODE_X_SPACING;
-                y += NODE_Y_SPACING + (hasErrorNode ? 200 : 0);
+                y += NODE_Y_SPACING + (hasErrorNode ? (NODE_Y_GAP  * 1.5) : 0);
                 arrow_dir = ARROW_DIR.RIGHT;
                 hasErrorNode = false;
             } else {
