@@ -38,6 +38,8 @@ class Node {
             new Connector(this, this.right, this.cy, [0, 0, 255, 128])
         ];
         this.selectedConnector = null;
+        this.inCopyBuffer = false;
+        this.cutFlag = false;
     }
 
     _setCenters() {
@@ -113,6 +115,8 @@ class Node {
 
     deselect() {
         this.selected = false;
+        this.inCopyBuffer = false;
+        this.cutFlag = false;
         if (this.selectedConnector) this.selectedConnector.deselect();
     }
 
@@ -281,6 +285,17 @@ class Node {
             p.textSize(this.fontSize);
             p.fill(255);
             p.text("NO", this.cx, this.bottom + d + boxH/2 + 1);
+            p.pop();
+        }
+        // in copy buffer
+        if (this.inCopyBuffer) {
+            p.push();
+            p.noFill();
+            this.cutFlag ? p.stroke(255, 0, 0) : p.stroke(0, 0, 255);
+            p.strokeWeight(3);
+            p.drawingContext.setLineDash([5, 10]);
+            p.rect(this.x - 10, this.y - 10, this.w + 20, this.h + 20);
+            p.drawingContext.setLineDash([]);
             p.pop();
         }
         // testing only

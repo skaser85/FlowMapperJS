@@ -118,21 +118,21 @@ let menuTemplate = [
         click: () => mainWindow.webContents.send("cut:node"),
         id: "cut-node",
         enabled: true,
-        accelerator: "Ctrl+x"
+        accelerator: "Ctrl+Shift+x"
       },
       { 
         label: "Copy Node(s)",
         click: () => mainWindow.webContents.send("copy:node"),
         id: "copy-node",
         enabled: true,
-        accelerator: "Ctrl+c"
+        accelerator: "Ctrl+Shift+c"
       },
       { 
         label: "Paste Node(s)",
         click: () => mainWindow.webContents.send("paste:node"),
         id: "paste-node",
         enabled: true,
-        accelerator: "Ctrl+v"
+        accelerator: "Ctrl+Shift+v"
       },
       { type: "separator" },
       { 
@@ -140,7 +140,7 @@ let menuTemplate = [
         click: () => mainWindow.webContents.send("select:all"),
         id: "select-all-action",
         enabled: true,
-        accelerator: "Ctrl+a"
+        accelerator: "Ctrl+Shift+a"
       },
     ]
   },

@@ -45,6 +45,9 @@ let NEEDS_SAVED = false;
 let ACTIONS = [];
 let REDOS = [];
 
+let COPY_BUFFER = [];
+let CUT_FLAG = false;
+
 const sketch = (p) => {
     let menuStartY = 0;
     let deltaOffset = 0;
@@ -156,28 +159,27 @@ const sketch = (p) => {
         }
         return clickHandled;
     }
-
-    addSelectedNode = (n) => {
-        if (SELECTED_NODES.length) {
-            let ni = SELECTED_NODES.findIndex(s => s.id === n.id);
-            if (ni > -1) {
-                n.deselect();
-                SELECTED_NODES.splice(ni, 1);
-            } else {
-                n.select();
-                SELECTED_NODES.push(n);
-            }
-        } else {
-            n.select();
-            SELECTED_NODES.push(n);
-        }
-    }
-
 }
 
 const app = new p5(sketch);
 
 // functions that do NOT require access to p5
+function addSelectedNode(n) {
+    if (SELECTED_NODES.length) {
+        let ni = SELECTED_NODES.findIndex(s => s.id === n.id);
+        if (ni > -1) {
+            n.deselect();
+            SELECTED_NODES.splice(ni, 1);
+        } else {
+            n.select();
+            SELECTED_NODES.push(n);
+        }
+    } else {
+        n.select();
+        SELECTED_NODES.push(n);
+    }
+}
+
 function createNode(type) {
     let n;
     switch(type) {
@@ -199,12 +201,17 @@ function deleteNode() {
     if (SELECTED_NODES.length) {
         pushUndoState();
         SELECTED_NODES.forEach(n => {
-            NODES.splice(n.id, 1);
+            let delIdx = NODES.findIndex(node => node.id === n.id);
+            NODES.splice(delIdx, 1);
+            let copyIdx = COPY_BUFFER.findIndex(node => id === n.id);
+            if (copyIdx > -1) COPY_BUFFER.splice(copyIdx, 1);
         });
-        NODES.forEach((n, i) => {
-            n.id = i
-            n.deselect();
-        });
+        if (NODES.length) {
+            NODES.forEach((n, i) => {
+                n.id = i
+                n.deselect();
+            });
+        }
         SELECTED_NODES = [];
         NEEDS_SAVED = true;
     } else {
@@ -264,6 +271,9 @@ function popUndoState() {
 
 function undoAction() {
     NODES = popUndoState();
+    NODES.forEach(n => {
+        if (n.selected) addSelectedNode(n);
+    });
 }
 
 function redoAction() {
@@ -271,6 +281,9 @@ function redoAction() {
     if (state) {
         pushUndoState();
         NODES = state;
+        NODES.forEach(n => {
+            if (n.selected) addSelectedNode(n);
+        });
     }
 }
 
@@ -374,6 +387,60 @@ ipcRenderer.on("undo:action", (e, data) => {
 
 ipcRenderer.on("redo:action", (e, data) => {
     redoAction();
+});
+
+ipcRenderer.on("select:all", (e, data) => {
+    NODES.forEach(n => addSelectedNode(n));
+});
+
+ipcRenderer.on("copy:node", (e, data) => {
+    if (SELECTED_NODES.length) {
+        SELECTED_NODES.forEach(n => {
+            n.inCopyBuffer = true;
+            n.cutFlag = false;
+        });
+        COPY_BUFFER = [...SELECTED_NODES];
+        CUT_FLAG = false;
+    } else {
+        console.log("ain't nothin' selected, broseph");
+    }
+});
+
+ipcRenderer.on("cut:node", (e, data) => {
+    if (SELECTED_NODES.length) {
+        SELECTED_NODES.forEach(n => {
+            n.inCopyBuffer = true;
+            n.cutFlag = true;
+        });
+        COPY_BUFFER = [...SELECTED_NODES];
+        CUT_FLAG = true;
+    } else {
+        console.log("ain't nothin' selected, broseph");
+    }
+});
+
+ipcRenderer.on("paste:node", (e, data) => {
+    if (COPY_BUFFER.length) {
+        pushUndoState();
+        COPY_BUFFER.forEach(n => {
+            let node = createNode(n.type);
+            node.setText(n.flattenText());
+            if (n.errorNode) {
+                node.errorNode.setText(n.errorNode.flattenText());
+            }
+            updateNodesList(node);
+        });
+        if (CUT_FLAG) {
+            COPY_BUFFER.forEach(n => {
+                let delIdx = NODES.findIndex(node => node.id === n.id);
+                NODES.splice(delIdx, 1);
+            });
+        }
+        COPY_BUFFER.forEach(n => n.inCopyBuffer = false);
+        COPY_BUFFER = [];
+    } else {
+        console.log("copy buffer be empty, brojango unchained");
+    }
 });
 
 // Webpage Event Listeners
