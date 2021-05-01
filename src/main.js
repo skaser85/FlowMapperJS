@@ -26,14 +26,14 @@ let menuTemplate = [
     label: "File",
     submenu: [
       { 
-        label: "Open Project...",
+        label: "Open Project",
         click: openProject,
         id: "open-project",
         enabled: true,
         accelerator: "Ctrl+o"
       },
       { 
-        label: "New Project...",
+        label: "New Project",
         click: newProject,
         id: "new-project",
         enabled: true,
@@ -41,19 +41,15 @@ let menuTemplate = [
       },
       { type: "separator" },      
       { 
-        label: "Save Project...",
-        click: () => {
-          mainWindow.webContents.send("save:project");
-        },
+        label: "Save Project",
+        click: () => mainWindow.webContents.send("save:project"),
         id: "save-project",
         enabled: true,
         accelerator: "Ctrl+s"
       },
       { 
-        label: "Save Project As...",
-        click: () => {
-          mainWindow.webContents.send("save:project:as");
-        },
+        label: "Save Project As",
+        click: () => mainWindow.webContents.send("save:project:as"),
         id: "save-project-as",
         enabled: true,
         accelerator: "Ctrl+Shift+s"
@@ -66,65 +62,86 @@ let menuTemplate = [
     label: "Node",
     submenu: [      
       { 
-        label: "Create User Action Node...",
-        click: () => {
-          mainWindow.webContents.send("create:node", {type: "user", text: ""});
-        },
+        label: "Create User Action Node",
+        click: () => mainWindow.webContents.send("create:node", {type: "user", text: ""}),
         id: "create-use-node",
         enabled: true,
         accelerator: "F1"
       },
       { 
-        label: "Create System Action Node...",
-        click: () => {
-          mainWindow.webContents.send("create:node", {type: "system", text: ""});
-        },
+        label: "Create System Action Node",
+        click: () => mainWindow.webContents.send("create:node", {type: "system", text: ""}),
         id: "create-system-node",
         enabled: true,
         accelerator: "F2"
       },
       { 
-        label: "Create Decision Node...",
-        click: () => {
-          mainWindow.webContents.send("create:node", {type: "decision", text: ""});
-        },
+        label: "Create Decision Node",
+        click: () => mainWindow.webContents.send("create:node", {type: "decision", text: ""}),
         id: "create-decision-node",
         enabled: true,
         accelerator: "F3"
       },
       { type: "separator" },
       { 
-        label: "Edit Selected Node...",
-        click: () => {
-          mainWindow.webContents.send("edit:node");
-        },
+        label: "Edit Selected Node",
+        click: () => mainWindow.webContents.send("edit:node"),
         id: "edit-selected-node",
         enabled: true,
         accelerator: "Ctrl+e"
       },
       { 
-        label: "Delete Selected Node...",
-        click: () => {
-          mainWindow.webContents.send("delete:node");
-        },
+        label: "Delete Selected Node",
+        click: () => mainWindow.webContents.send("delete:node"),
         id: "delete-selected-node",
         enabled: true,
         accelerator: "delete"
       },
-    ]
-  },
-  {
-    label: "Edit",
-    submenu: [
-      { role: "undo" },
-      { role: "redo" },
       { type: "separator" },
-      { role: "cut" },
-      { role: "copy" },
-      { role: "paste" },
-      { role: "delete" },
+      { 
+        label: "Undo Action",
+        click: () => mainWindow.webContents.send("undo:action"),
+        id: "undo-action",
+        enabled: true,
+        accelerator: "Ctrl+z"
+      },
+      { 
+        label: "Redo Action",
+        click: () => mainWindow.webContents.send("redo:action"),
+        id: "redo-action",
+        enabled: true,
+        accelerator: "Ctrl+y"
+      },
       { type: "separator" },
-      { role: "selectAll" }
+      { 
+        label: "Cut Node(s)",
+        click: () => mainWindow.webContents.send("cut:node"),
+        id: "cut-node",
+        enabled: true,
+        accelerator: "Ctrl+x"
+      },
+      { 
+        label: "Copy Node(s)",
+        click: () => mainWindow.webContents.send("copy:node"),
+        id: "copy-node",
+        enabled: true,
+        accelerator: "Ctrl+c"
+      },
+      { 
+        label: "Paste Node(s)",
+        click: () => mainWindow.webContents.send("paste:node"),
+        id: "paste-node",
+        enabled: true,
+        accelerator: "Ctrl+v"
+      },
+      { type: "separator" },
+      { 
+        label: "Select All Nodes",
+        click: () => mainWindow.webContents.send("select:all"),
+        id: "select-all-action",
+        enabled: true,
+        accelerator: "Ctrl+a"
+      },
     ]
   },
   {

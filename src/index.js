@@ -39,8 +39,11 @@ let NODES = [];
 let PROJECT_DIR = "no project open";
 let PROJECT_FILENAME = "???";
 let PROJECT_LAST_SAVED = "";
+let UNDOS_AVAILABLE = 0;
 
 let NEEDS_SAVED = false;
+let ACTIONS = [];
+let REDOS = [];
 
 const sketch = (p) => {
     let menuStartY = 0;
@@ -55,7 +58,7 @@ const sketch = (p) => {
     p.draw = () => {
         p.background(255);
         let x = 100;
-        let y = 75;
+        let y = 100;
         let arrow_dir = ARROW_DIR.RIGHT;
         let hasErrorNode = false;
         for (let i = 0; i < NODES.length; i++) {
@@ -86,6 +89,7 @@ const sketch = (p) => {
         p.text("Project Directory: " + PROJECT_DIR, 10, 20);
         p.text("Project File Name: " + PROJECT_FILENAME + (NEEDS_SAVED ? "*" : ""), 10, 40);
         p.text("Project Last Saved: " + PROJECT_LAST_SAVED, 10, 60);
+        p.text("Undos Available: " + UNDOS_AVAILABLE, 10, 80);
         p.pop();
         // p.noLoop();
     }
@@ -193,6 +197,7 @@ function createNode(type) {
 
 function deleteNode() {
     if (SELECTED_NODES.length) {
+        pushUndoState();
         SELECTED_NODES.forEach(n => {
             NODES.splice(n.id, 1);
         });
@@ -236,8 +241,37 @@ function saveProjectAs() {
 }
 
 function updateNodesList(n) {
+    pushUndoState();
     NODES.push(n);
     NEEDS_SAVED = true;
+}
+
+function pushUndoState() {
+    ACTIONS.push([...NODES]);
+    UNDOS_AVAILABLE = ACTIONS.length;
+}
+
+function popUndoState() {
+    let state = ACTIONS.pop();
+    if (state) {
+        REDOS.push([...NODES]);
+        UNDOS_AVAILABLE = ACTIONS.length;
+        return state;
+    } else {
+        return [];
+    }
+}
+
+function undoAction() {
+    NODES = popUndoState();
+}
+
+function redoAction() {
+    let state = REDOS.pop();
+    if (state) {
+        pushUndoState();
+        NODES = state;
+    }
 }
 
 // Electron connector functions
@@ -257,6 +291,7 @@ ipcRenderer.on("delete:node", (e, data) => {
 });
 
 ipcRenderer.on("update:node", (e, data) => {
+    pushUndoState();
     let node = NODES[data.id];
     if (data.parent) {
         node = NODES[data.parent.id].errorNode;
@@ -282,6 +317,9 @@ ipcRenderer.on("save:project:as", (e, data) => {
 });
 
 ipcRenderer.on("open:project", (e, data) => {
+    if (NEEDS_SAVED) {
+        console.log("need some kind of confirmation about whether they want to save the changes to this file");
+    }
     NODES = [];
     data.data.forEach(n => {
         let node = createNode(n.type);
@@ -297,7 +335,11 @@ ipcRenderer.on("open:project", (e, data) => {
     PROJECT_FILENAME = data.fileName;
     PROJECT_LAST_SAVED = data.lastSaved;
     NEEDS_SAVED = false;
+    ACTIONS = [];
+    UNDOS_AVAILABLE = 0;
+    REDOS = [];
 });
+
 ipcRenderer.on("project:saved", (e, data) => {
     PROJECT_DIR = data.path;
     PROJECT_FILENAME = data.fileName;
@@ -313,12 +355,28 @@ ipcRenderer.on("project:saved:as", (e, data) => {
 });
 
 ipcRenderer.on("new:project", (e, data) => {
+    if (NEEDS_SAVED) {
+        console.log("need some kind of confirmation about whether they want to save the changes to this file");
+    }
+    NODES = [];
     PROJECT_DIR = "new project - unsaved";
     PROJECT_FILENAME = "new project - unsaved";
     PROJECT_LAST_SAVED = "";
-    NEEDS_SAVED = true;
+    NEEDS_SAVED = false;
+    ACTIONS = [];
+    UNDOS_AVAILABLE = 0;
+    REDOS = [];
 });
 
+ipcRenderer.on("undo:action", (e, data) => {
+    undoAction();
+});
+
+ipcRenderer.on("redo:action", (e, data) => {
+    redoAction();
+});
+
+// Webpage Event Listeners
 addUserNodeBtn.addEventListener("click", (e) => {
     let n = createNode("user");
     n.id = NODES.length;
