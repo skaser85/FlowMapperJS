@@ -14,7 +14,7 @@ class Node {
         this.right = 0;
         this.bottom = 0;
         this.right = 0;
-        this.font = "Consolas";
+        this.font = "Source Sans Pro";
         this.fontSize = 16;
         this.lineSpacing = 3;
         this.arrowLineLen = 50;

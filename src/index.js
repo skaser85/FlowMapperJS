@@ -17,6 +17,9 @@ const openProjectBtn = document.querySelector("#open-project");
 const newProjectBtn = document.querySelector("#new-project");
 const saveProjectBtn = document.querySelector("#save-project");
 const saveProjectAsBtn = document.querySelector("#save-project-as");
+const projectDirectoryP = document.querySelector("#project-directory");
+const projectFileNameP = document.querySelector("#project-file-name");
+const projectLastSavedP = document.querySelector("#project-last-saved");
 
 let flowCanvas;
 let canvas_width = 0;
@@ -36,14 +39,10 @@ const NODE_Y_SPACING = NODE_H + NODE_Y_GAP;
 let SELECTED_NODES = [];
 let NODES = [];
 
-let PROJECT_DIR = "no project open";
-let PROJECT_FILENAME = "???";
-let PROJECT_LAST_SAVED = "";
-let UNDOS_AVAILABLE = 0;
-
 let NEEDS_SAVED = false;
 let ACTIONS = [];
 let REDOS = [];
+let UNDOS_AVAILABLE = 0;
 
 let COPY_BUFFER = [];
 let CUT_FLAG = false;
@@ -61,7 +60,7 @@ const sketch = (p) => {
     p.draw = () => {
         p.background(255);
         let x = 100;
-        let y = 100;
+        let y = 50;
         let arrow_dir = ARROW_DIR.RIGHT;
         let hasErrorNode = false;
         for (let i = 0; i < NODES.length; i++) {
@@ -87,12 +86,9 @@ const sketch = (p) => {
             }
         }
         p.push();
-        p.textFont("CONSOLAS");
-        p.textSize(12);
-        p.text("Project Directory: " + PROJECT_DIR, 10, 20);
-        p.text("Project File Name: " + PROJECT_FILENAME + (NEEDS_SAVED ? "*" : ""), 10, 40);
-        p.text("Project Last Saved: " + PROJECT_LAST_SAVED, 10, 60);
-        p.text("Undos Available: " + UNDOS_AVAILABLE, 10, 80);
+        p.textFont("Source Sans Pro");
+        p.textSize(16);
+        p.text("Undos Available: " + UNDOS_AVAILABLE, 10, 20);
         p.pop();
         // p.noLoop();
     }
@@ -197,14 +193,22 @@ function createNode(type) {
     return n;
 }
 
-function deleteNode() {
+function deleteNode(n) {
+    let delIdx = NODES.findIndex(node => node.id === n.id);
+    NODES.splice(delIdx, 1);
+}
+
+function deleteFromCopyBuffer(n) {
+    let copyIdx = COPY_BUFFER.findIndex(node => node.id === n.id);
+    if (copyIdx > -1) COPY_BUFFER.splice(copyIdx, 1);
+}
+
+function deleteSelectedNodes() {
     if (SELECTED_NODES.length) {
         pushUndoState();
         SELECTED_NODES.forEach(n => {
-            let delIdx = NODES.findIndex(node => node.id === n.id);
-            NODES.splice(delIdx, 1);
-            let copyIdx = COPY_BUFFER.findIndex(node => id === n.id);
-            if (copyIdx > -1) COPY_BUFFER.splice(copyIdx, 1);
+            deleteFromCopyBuffer(n);
+            deleteNode(n);
         });
         if (NODES.length) {
             NODES.forEach((n, i) => {
@@ -300,7 +304,7 @@ ipcRenderer.on("edit:node", (e, data) => {
 });
 
 ipcRenderer.on("delete:node", (e, data) => {
-    deleteNode();
+    deleteSelectedNodes();
 });
 
 ipcRenderer.on("update:node", (e, data) => {
@@ -344,9 +348,9 @@ ipcRenderer.on("open:project", (e, data) => {
         }
         updateNodesList(node);
     });
-    PROJECT_DIR = data.path;
-    PROJECT_FILENAME = data.fileName;
-    PROJECT_LAST_SAVED = data.lastSaved;
+    projectDirectoryP.innerHTML = data.path;
+    projectFileNameP.innerHTML = data.fileName;
+    projectLastSavedP.innerHTML = data.lastSaved;
     NEEDS_SAVED = false;
     ACTIONS = [];
     UNDOS_AVAILABLE = 0;
@@ -354,16 +358,16 @@ ipcRenderer.on("open:project", (e, data) => {
 });
 
 ipcRenderer.on("project:saved", (e, data) => {
-    PROJECT_DIR = data.path;
-    PROJECT_FILENAME = data.fileName;
-    PROJECT_LAST_SAVED = data.lastSaved;
+    projectDirectoryP.innerHTML = data.path;
+    projectFileNameP.innerHTML = data.fileName;
+    projectLastSavedP.innerHTML = data.lastSaved;
     NEEDS_SAVED = false;
 });
 
 ipcRenderer.on("project:saved:as", (e, data) => {
-    PROJECT_DIR = data.path;
-    PROJECT_FILENAME = data.fileName;
-    PROJECT_LAST_SAVED = data.lastSaved;
+    projectDirectoryP.innerHTML = data.path;
+    projectFileNameP.innerHTML = data.fileName;
+    projectLastSavedP.innerHTML = data.lastSaved;
     NEEDS_SAVED = false;
 });
 
@@ -372,9 +376,9 @@ ipcRenderer.on("new:project", (e, data) => {
         console.log("need some kind of confirmation about whether they want to save the changes to this file");
     }
     NODES = [];
-    PROJECT_DIR = "new project - unsaved";
-    PROJECT_FILENAME = "new project - unsaved";
-    PROJECT_LAST_SAVED = "";
+    projectDirectoryP.innerHTML = "new project - unsaved";
+    projectFileNameP.innerHTML = "new project - unsaved";
+    projectLastSavedP.innerHTML = "";
     NEEDS_SAVED = false;
     ACTIONS = [];
     UNDOS_AVAILABLE = 0;
@@ -431,10 +435,7 @@ ipcRenderer.on("paste:node", (e, data) => {
             updateNodesList(node);
         });
         if (CUT_FLAG) {
-            COPY_BUFFER.forEach(n => {
-                let delIdx = NODES.findIndex(node => node.id === n.id);
-                NODES.splice(delIdx, 1);
-            });
+            COPY_BUFFER.forEach(n => deleteNode(n));
         }
         COPY_BUFFER.forEach(n => n.inCopyBuffer = false);
         COPY_BUFFER = [];
@@ -467,7 +468,7 @@ editNodeBtn.addEventListener("click", (e) => {
 });
 
 deleteNodeBtn.addEventListener("click", (e) => {
-    deleteNode();
+    deleteSelectedNodes();
 });
 
 openProjectBtn.addEventListener("click", (e) => {

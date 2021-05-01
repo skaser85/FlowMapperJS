@@ -3,17 +3,13 @@ body {
     padding: 0;
     margin: 0;
     display: flex;
-    /* font-family: 'Inconsolata', monospace; */
     font-family: 'Montserrat', sans-serif;
-    /* font-family: 'Nunito', sans-serif; */
-    /* font-family: 'Open Sans', sans-serif; */
-    /* font-family: 'Zilla Slab', serif; */
 }
 
 #page-wrapper {
-    width: 640px;
-    height: 640px;
-    margin: 0 auto;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: center;

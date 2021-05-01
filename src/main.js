@@ -310,7 +310,7 @@ function setProjectDirectoryAndFileName() {
       filters: [{name: 'JSON', extensions: ["json"]}]
     }).then(result => {
       if (!result.canceled) {
-        projectFileName = path.basename(result.filePath);
+        projectFileName = path.basename(result.filePath).split(".")[0];
         projectDir = path.dirname(result.filePath);
         fs.stat(result.filePath, (err, stats) => {
           if (err) {
@@ -361,7 +361,7 @@ function getProjectFile() {
     }).then(result => {
       if (!result.canceled) {
         let fp = result.filePaths[0];
-        projectFileName = path.basename(fp);
+        projectFileName = path.basename(fp).split(".")[0];
         projectDir = path.dirname(fp);
         fs.stat(fp, (err, stats) => {
           if (err) {
