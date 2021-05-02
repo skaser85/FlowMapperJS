@@ -68,8 +68,7 @@ const sketch = (p) => {
             if (n.errorNode) hasErrorNode = true;
             n.setCoords(x, y);
             arrow_dir === ARROW_DIR.RIGHT ? x += NODE_X_SPACING : x -= NODE_X_SPACING;
-            // console.log(x, canvas_width);
-            if (x > canvas_width) {
+            if ((x + NODE_X_SPACING) > canvas_width) {
                 n.draw(p, arrow_dir, true, hasErrorNode);
                 x -= NODE_X_SPACING;
                 y += NODE_Y_SPACING + (hasErrorNode ? (NODE_Y_GAP * 1.5) : 0);
