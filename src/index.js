@@ -393,7 +393,9 @@ ipcRenderer.on("redo:action", (e, data) => {
 });
 
 ipcRenderer.on("select:all", (e, data) => {
-    NODES.forEach(n => addSelectedNode(n));
+    NODES.forEach(n => {
+        if(!n.selected) addSelectedNode(n);
+    });
 });
 
 ipcRenderer.on("copy:node", (e, data) => {
@@ -435,6 +437,7 @@ ipcRenderer.on("paste:node", (e, data) => {
         });
         if (CUT_FLAG) {
             COPY_BUFFER.forEach(n => deleteNode(n));
+            NODES.forEach((n, i) => n.id = i);
         }
         COPY_BUFFER.forEach(n => n.inCopyBuffer = false);
         COPY_BUFFER = [];

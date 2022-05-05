@@ -3,8 +3,8 @@ class Connector {
         this.parent = parent;
         this.x = x;
         this.y = y;
-        this.w = 20;
-        this.h = 20;
+        this.w = 12;
+        this.h = 12;
         this.color = colorArr;
         this._setCenters();
         this._setBounds();
@@ -59,8 +59,8 @@ class Connector {
     draw(p) {
         p.push();
         p.fill(this.createColor(p, this.color, this.color[3]));
-        p.stroke(0);
-        p.strokeWeight(1);
+        p.stroke(255, 200);
+        p.strokeWeight(3);
         if (this.selected) {
             p.fill(this.createColor(p, this.color, this.selectedFlashTimer));
             if (this.selectedFlashTimerDir === 0) {
